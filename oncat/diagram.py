@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
 import matplotlib.transforms as transforms
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.axes._axes import _make_inset_locator
 
 XOPT_MAX = 5.0 #mm
 YOPT_MAX = 5.0 #mm
@@ -16,38 +17,50 @@ class Diagram:
 		arguments: *X, *Y, *Xopt, *Yopt, *limits, **kwargs
 		'''
 		super().__init__()
-		self.__Xopt_max = kwargs.get('Xopt_max',XOPT_MAX)
-		self.__Yopt_max = kwargs.get('Yopt_max',YOPT_MAX)
-		self.__X_max = kwargs.get('X_max',X_MAX)
-		self.__Y_max = kwargs.get('Y_max',Y_MAX)
-		self.__X_scale = kwargs.get('X_scale',X_SCALE)
-		self.__Y_scale = kwargs.get('Y_scale',Y_SCALE)
-		self.__X = X if X is not None else self.__X_max/2.0
-		self.__Y = Y if Y is not None else self.__Y_max/2.0
-		self.__Xopt = Xopt if Xopt is not None else self.__Xopt_max/2.0
-		self.__Yopt = Yopt if Yopt is not None else self.__Yopt_max/2.0
+		self._Xopt_max = kwargs.get('Xopt_max',XOPT_MAX)
+		self._Yopt_max = kwargs.get('Yopt_max',YOPT_MAX)
+		self._X_max = kwargs.get('X_max',X_MAX)
+		self._Y_max = kwargs.get('Y_max',Y_MAX)
+		self._X_scale = kwargs.get('X_scale',X_SCALE)
+		self._Y_scale = kwargs.get('Y_scale',Y_SCALE)
+		self._X = X if X is not None else self._X_max/2.0
+		self._Y = Y if Y is not None else self._Y_max/2.0
+		self._Xopt = Xopt if Xopt is not None else self._Xopt_max/2.0
+		self._Yopt = Yopt if Yopt is not None else self._Yopt_max/2.0
 
-		self.__fig, self.__ax = plt.subplots()
-		self.__trans = transforms.blended_transform_factory(self.__ax.transData, self.__ax.transData)
-		self.__ax2 = self.__ax.inset_axes(
-			(self.__X-self.__Xopt_max/2.0,self.__Y-self.__Yopt_max/2.0,self.__Xopt_max,self.__Yopt_max),
-			transform=self.__trans
+		self._fig, self._ax = plt.subplots()
+		self._canvas = FigureCanvas(self._fig)
+		self._trans = transforms.blended_transform_factory(self._ax.transData, self._ax.transData)
+		self._ax2 = self._ax.inset_axes(
+			(self._X-self._Xopt_max/2.0,self._Y-self._Yopt_max/2.0,self._Xopt_max,self._Yopt_max),
+			transform=self._trans
 			)
-		self.__fig.add_axes(self.__ax2)
-		self.__ax.set_xlim(0,self.__X_max)
-		self.__ax.set_ylim(0,self.__Y_max)
-		self.__ax.set_xlabel('X (mm)')
-		self.__ax.set_ylabel('Y (mm)')
-		self.__ax.grid(True)
+		self._fig.add_axes(self._ax2)
+		self._ax.set_xlim(0,self._X_max)
+		self._ax.set_ylim(0,self._Y_max)
+		self._ax.set_xlabel('X (mm)')
+		self._ax.set_ylabel('Y (mm)')
+		self._ax.grid(True)
 
-		self.__ax2.plot([self.__Xopt],[self.__Yopt],'rx')
+		self._ax2.plot([self._Xopt],[self._Yopt],'rx')
 
-		self.__ax2.set_xlim(0,self.__Xopt_max)
-		self.__ax2.set_ylim(0,self.__Yopt_max)
+		self._ax2.set_xlim(0,self._Xopt_max)
+		self._ax2.set_ylim(0,self._Yopt_max)
 
-		self.__limits = limits if limits != {} else kwargs.get('limits',{})
+		self._limits = limits if limits != {} else kwargs.get('limits',{})
 		self.set_limits(limits)
 
+
+	def janssen_position(self,X,Y):
+		'''
+		arguments: X, Y
+
+		moves inset figure to position at X, Y; converts using self._X_scale and self._Y_scale
+		'''
+		self._X = X * self._X_scale
+		self._Y = Y * self._Y_scale
+		self._ax2.set_axes_locator(_make_inset_locator((self._X-self._Xopt_max/2.0,self._Y-self._Yopt_max/2.0,self._Xopt_max,self._Yopt_max),self._ax.transData,self._ax))
+		
 
 	def set_limits(self,limits):
 		'''
@@ -60,45 +73,46 @@ class Diagram:
 			'Yopt_min':float}
 		and applies overlapping squares to these
 		'''
-		self.__ax2.patches = []
-		self.__ax2_limits = []
-		self.__Xopt_max_limit = (limits.get('Xopt_max',self.__Xopt_max),self.__Xopt_max)
-		self.__Yopt_max_limit = (limits.get('Yopt_max',self.__Yopt_max),self.__Yopt_max)
-		self.__Xopt_min_limit = (limits.get('Xopt_min',0),0)
-		self.__Yopt_min_limit = (limits.get('Yopt_min',0),0)
+		self._ax2.patches = []
+		self._ax2_limits = []
+		self._Xopt_max_limit = (limits.get('Xopt_max',self._Xopt_max),self._Xopt_max)
+		self._Yopt_max_limit = (limits.get('Yopt_max',self._Yopt_max),self._Yopt_max)
+		self._Xopt_min_limit = (limits.get('Xopt_min',0),0)
+		self._Yopt_min_limit = (limits.get('Yopt_min',0),0)
 
-		if self.__Yopt_max_limit[0] != self.__Yopt_max_limit[1]:
-			self.__ax2_limits.append(Rectangle(
-				(0,self.__Yopt_max_limit[0]),self.__Xopt_max,self.__Yopt_max-self.__Yopt_max_limit[0],fill=True,color='grey'))
-		if self.__Yopt_min_limit[0] != self.__Yopt_min_limit[1]:
-			self.__ax2_limits.append(Rectangle(
-				(0,0),self.__Xopt_max,self.__Yopt_min_limit[0],fill=True,color='grey'))
-		if self.__Xopt_max_limit[0] != self.__Xopt_max_limit[1]:
-			self.__ax2_limits.append(Rectangle(
-				(self.__Xopt_max_limit[0],self.__Yopt_min_limit[0]),self.__Xopt_max-self.__Xopt_max_limit[0],self.__Yopt_max_limit[0]-self.__Yopt_min_limit[0],fill=True,color='grey'))
-		if self.__Xopt_min_limit[0] != self.__Xopt_min_limit[1]:
-			self.__ax2_limits.append(Rectangle(
-				(0,self.__Yopt_min_limit[0]),self.__Xopt_min_limit[0],self.__Yopt_max_limit[0]-self.__Yopt_min_limit[0],fill=True,color='grey'))
+		if self._Yopt_max_limit[0] != self._Yopt_max_limit[1]:
+			self._ax2_limits.append(Rectangle(
+				(0,self._Yopt_max_limit[0]),self._Xopt_max,self._Yopt_max-self._Yopt_max_limit[0],fill=True,color='grey'))
+		if self._Yopt_min_limit[0] != self._Yopt_min_limit[1]:
+			self._ax2_limits.append(Rectangle(
+				(0,0),self._Xopt_max,self._Yopt_min_limit[0],fill=True,color='grey'))
+		if self._Xopt_max_limit[0] != self._Xopt_max_limit[1]:
+			self._ax2_limits.append(Rectangle(
+				(self._Xopt_max_limit[0],self._Yopt_min_limit[0]),self._Xopt_max-self._Xopt_max_limit[0],self._Yopt_max_limit[0]-self._Yopt_min_limit[0],fill=True,color='grey'))
+		if self._Xopt_min_limit[0] != self._Xopt_min_limit[1]:
+			self._ax2_limits.append(Rectangle(
+				(0,self._Yopt_min_limit[0]),self._Xopt_min_limit[0],self._Yopt_max_limit[0]-self._Yopt_min_limit[0],fill=True,color='grey'))
 
-		for item in self.__ax2_limits:
-			self.__ax2.add_patch(item)
+		for item in self._ax2_limits:
+			self._ax2.add_patch(item)
 
 
 	def show(self):
-		plt.show()
+		self._fig.show()
 
+
+	def save(self,filename=None):
+		if filename == None:
+			filename = 'savefile.png'
+		self._fig.savefig(filename)
 
 
 def main():
-	limits = {'Yopt_max':3.3,'Yopt_min':1,'Xopt_min':1,'Xopt_max':3}
+	limits = {'Yopt_max':3.3}
 	d = Diagram(limits=limits)
-	d.show()
-	print('derp')
-	limits = {'Yopt_max:':3.3}
-	print('derp')
-	d.set_limits(limits)
-	print('derp')
-	d.show()
+	d.save('test1.png')
+	d.janssen_position(300,300)
+	d.save('test2.png')
 
 if __name__ == "__main__":
 	main()
