@@ -417,7 +417,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Z</string>
+      <string>X</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="lineEdit_8">
@@ -440,7 +440,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>X</string>
+      <string>Xopt</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="lineEdit_25">
@@ -463,7 +463,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Xopt</string>
+      <string>Y</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_26">
@@ -476,7 +476,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Yopt</string>
+      <string>Z</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_27">
@@ -489,7 +489,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Y</string>
+      <string>Yopt</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="lineEdit_26">
@@ -1001,7 +1001,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab_3">
      <attribute name="title">

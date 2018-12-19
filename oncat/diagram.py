@@ -42,7 +42,7 @@ class Diagram:
 		self._ax.set_ylabel('Y (mm)')
 		self._ax.grid(True)
 
-		self._ax2.plot([self._Xopt],[self._Yopt],'rx')
+		self._ax2_line, = self._ax2.plot([self._Xopt],[self._Yopt],'rx')
 
 		self._ax2.set_xlim(0,self._Xopt_max)
 		self._ax2.set_ylim(0,self._Yopt_max)
@@ -51,7 +51,7 @@ class Diagram:
 		self.set_limits(limits)
 
 
-	def janssen_position(self,X,Y):
+	def set_janssen_position(self,X,Y):
 		'''
 		arguments: X, Y
 
@@ -61,6 +61,20 @@ class Diagram:
 		self._Y = Y * self._Y_scale
 		self._ax2.set_axes_locator(_make_inset_locator((self._X-self._Xopt_max/2.0,self._Y-self._Yopt_max/2.0,self._Xopt_max,self._Yopt_max),self._ax.transData,self._ax))
 		
+
+	def set_attocube_position(self,Xopt,Yopt):
+		'''
+		arguments: Xopt, Yopt
+
+		moves position indicator at Xopt, Yopt
+		'''
+		self._Xopt = Xopt
+		self._Yopt = Yopt
+		self._ax2_line.set_xdata([self._Xopt])
+		self._ax2_line.set_ydata([self._Yopt])
+		self._canvas.draw()
+		self._canvas.flush_events()
+
 
 	def set_limits(self,limits):
 		'''
@@ -111,8 +125,10 @@ def main():
 	limits = {'Yopt_max':3.3}
 	d = Diagram(limits=limits)
 	d.save('test1.png')
-	d.janssen_position(300,300)
+	d.set_janssen_position(300,300)
 	d.save('test2.png')
+	d.set_attocube_position(.100,.100)
+	d.save('test3.png')
 
 if __name__ == "__main__":
 	main()
