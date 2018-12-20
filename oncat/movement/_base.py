@@ -16,5 +16,11 @@ class Mover:
 	def move_to(self,axis,position):
 		pass
 
+	def move_up(self,axis):
+		pass
+
+	def move_down(self,axis):
+		pass
+
 	def close(self):
 		pass
