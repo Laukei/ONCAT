@@ -2,28 +2,28 @@ import json
 
 DEFAULT_SETTINGS = {
 	'HW':{ # hardware settings
-		'movement':{
-			'FakeJanssen':{
-				'executable':r'oncat\movement\janssen\fakecacli\cacli.exe',
-				'lookup':json.dumps({'X':1,'Y':2}),
-				'server':False,
-				'verbose':False
-			},
-			'Janssen':{
-				'executable':r'oncat\movement\janssen\cacli\cacli.exe',
-				'lookup':json.dumps({'X':1,'Y':2}),
-				'server':False,
-				'verbose':False
-			},
-			'FakeANC350':{
-				'lookup':json.dumps({'Xopt':1,'Yopt':2,'Z':3})
-			},
-			'ANC350':{
-				'lookup':json.dumps({'Xopt':1,'Yopt':2,'Z':3})
-			}
+		'FakeJanssen':{
+			'executable':r'oncat\movement\janssen\fakecacli\cacli.exe',
+			'lookup':{'X':1,'Y':2},
+			'server':False,
+			'verbose':False
+		},
+		'Janssen':{
+			'executable':r'oncat\movement\janssen\cacli\cacli.exe',
+			'lookup':{'X':1,'Y':2},
+			'server':False,
+			'verbose':False
+		},
+		'FakeANC350':{
+			'lookup':{'Xopt':1,'Yopt':2,'Z':3}
+		},
+		'ANC350':{
+			'lookup':{'Xopt':1,'Yopt':2,'Z':3}
 		}
 	},
 	'SW':{ # software defaults
+		'longrangemover':'FakeJanssen',
+		'shortrangemover':'FakeANC350'
 	}
 }
 

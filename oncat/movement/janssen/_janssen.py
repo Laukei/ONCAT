@@ -3,9 +3,9 @@ from pyjanssen import MCM, FORWARD, BACKWARD
 
 
 class Janssen(Mover):
-	def __init__(self,cacli_path,**kwargs):
+	def __init__(self,**kwargs):
 		self._m = MCM(
-			exe=cacli_path,
+			exe=kwargs.get('executable','.'),
 			verbose=kwargs.get('verbose',False),
 			server=kwargs.get('server',False)
 		)

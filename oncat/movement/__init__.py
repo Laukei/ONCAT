@@ -2,7 +2,7 @@ from ._base import Mover
 from .janssen import FakeJanssen, Janssen
 from .attocube import FakeANC350, ANC350
 
-def lookup(key=None):
+def movement_lookup(key=None):
 	index = {
 			'FakeJanssen':FakeJanssen,
 			'FakeANC350':FakeANC350,

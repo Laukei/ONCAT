@@ -260,7 +260,7 @@
     <property name="title">
      <string>Global values</string>
     </property>
-    <widget class="QLineEdit" name="lineEdit">
+    <widget class="QLineEdit" name="T1_value">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -296,7 +296,7 @@
       <string>T2</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_2">
+    <widget class="QLineEdit" name="T2_value">
      <property name="geometry">
       <rect>
        <x>180</x>
@@ -322,7 +322,7 @@
       <string>T3</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_3">
+    <widget class="QLineEdit" name="T3_value">
      <property name="geometry">
       <rect>
        <x>300</x>
@@ -335,7 +335,7 @@
       <string/>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_4">
+    <widget class="QLineEdit" name="T4_value">
      <property name="geometry">
       <rect>
        <x>420</x>
@@ -358,7 +358,7 @@
       <string>T4</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_11">
+    <widget class="QLineEdit" name="Optical_power_value">
      <property name="geometry">
       <rect>
        <x>300</x>
@@ -384,7 +384,7 @@
       <string>Vstatic</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_10">
+    <widget class="QLineEdit" name="X_value">
      <property name="geometry">
       <rect>
        <x>420</x>
@@ -420,7 +420,7 @@
       <string>X</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_8">
+    <widget class="QLineEdit" name="Static_voltage">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -443,7 +443,7 @@
       <string>Xopt</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_25">
+    <widget class="QLineEdit" name="Z_value">
      <property name="geometry">
       <rect>
        <x>660</x>
@@ -492,7 +492,7 @@
       <string>Yopt</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_26">
+    <widget class="QLineEdit" name="Y_value">
      <property name="geometry">
       <rect>
        <x>540</x>
@@ -505,7 +505,7 @@
       <string/>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_9">
+    <widget class="QLineEdit" name="Yopt_value">
      <property name="geometry">
       <rect>
        <x>660</x>
@@ -515,7 +515,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_27">
+    <widget class="QLineEdit" name="Xopt_value">
      <property name="geometry">
       <rect>
        <x>540</x>
@@ -796,7 +796,7 @@
       </rect>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -1001,7 +1001,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab_3">
      <attribute name="title">
