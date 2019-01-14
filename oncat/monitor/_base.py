@@ -12,7 +12,7 @@ class BaseMonitor:
 	'''
 	def __init__(self,**kwargs):
 		self._func = kwargs.get('function')
-		self._params = kwargs.get('parameters')
+		self._params = kwargs.get('parameters',{})
 		self._st = kwargs.get('sleeptime',1)
 		self._sig = kwargs.get('signal')
 

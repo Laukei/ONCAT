@@ -19,11 +19,57 @@ DEFAULT_SETTINGS = {
 		},
 		'ANC350':{
 			'lookup':{'Xopt':1,'Yopt':2,'Z':3}
+		},
+		'FakeThermometer':{
+		},
+		'FakePowerMeter':{
 		}
 	},
 	'SW':{ # software defaults
-		'longrangemover':'FakeJanssen',
-		'shortrangemover':'FakeANC350'
+		'longrangemover':{
+			'device':'FakeJanssen',
+			'sleeptime':0.5
+			},
+		'shortrangemover':{
+			'device':'FakeANC350',
+			'sleeptime':0.25,
+			'limits': {'Yopt_max':3.3}
+			},
+		'vgroovecontrol':{
+			'voltage':30,
+			'frequency':100
+		},
+		'zcontrol':{
+			'voltage':40,
+			'frequency':100,
+			'lockstate':False
+		},
+		'probecontrol':{
+			'temperature':293,
+			'temperature-auto':True,
+			'frequency':100, #Hz, 0-600
+			'steps':100, 
+			'power':100 #step size
+		},
+		'global':{
+			'staticvoltage':0, #start with 0 voltage to prevent heating on startup
+			'probeautotempsensor':'T1',
+			'triggerbackedoffmessage':False
+		},
+		'ctc100':{
+			'device':'FakeThermometer',
+			'sleeptime':0.5,
+			'labels':['T1','T2','T3','T4']
+		},
+		'lakeshore':{
+			'device':'FakeThermometer',
+			'sleeptime':0.5,
+			'labels':['T5','T6','T7','T8']
+		},
+		'thorlabspowermeter':{
+			'device':'FakePowerMeter',
+			'sleeptime':0.5
+		}
 	}
 }
 
@@ -62,10 +108,23 @@ class Settings:
 		self.save()
 
 
+	def get_plaintext(self):
+		return json.dumps(self._settings,indent=2,sort_keys=True)
+
+	def get_defaults(self):
+		return json.dumps(DEFAULT_SETTINGS)
+
+	def set_plaintext(self,text):
+		try:
+			self._settings = json.loads(text)
+			self.save()
+		except json.decoder.JSONDecodeError:
+			print('error converting settings to json')
+
+
 	def save(self,filename=None):
 		if not filename:
 			filename = self.filename
-
 		try:
 			with open(filename,'w') as f:
 				f.write(json.dumps(self._settings))

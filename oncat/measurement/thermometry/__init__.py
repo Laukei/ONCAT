@@ -1,0 +1,1 @@
+from ._fakethermometer import FakeThermometer

@@ -110,6 +110,11 @@ class Diagram:
 		for item in self._ax2_limits:
 			self._ax2.add_patch(item)
 
+	def canvas(self):
+		return self._canvas
+
+	def fig(self):
+		return self._fig
 
 	def show(self):
 		self._fig.show()

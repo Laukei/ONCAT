@@ -1,34 +1,373 @@
 import sys
+import copy
 
 from PyQt5 import QtGui, QtCore, QtWidgets #QtWebEngineWidgets
 from PyQt5.uic import loadUi
 
 from .settings import Settings
+from .settingsgui import SettingsDialog
+from .diagram import Diagram
 from .monitor import launch_monitor_as_thread, MoverPositionMonitor, BaseMonitor
 from .movement import movement_lookup
+from .measurement import measurement_lookup
+
+
+# These settings need moving to Settings()
+MOVER_REPEAT_RATE = 250 # in ms
+GRAPH_UPDATE_RATE = 500 # in ms
 
 
 class MainWindow(QtWidgets.QMainWindow):
 	def __init__(self):
 		super().__init__()
+		loadUi('oncat/ui/mainwindow.ui',self)
 		self.name_of_application = "ONCAT Optoelectronic Nanopositioner Control & Alignment Toolkit"
 		self.setWindowTitle(self.name_of_application)
-		loadUi('oncat/mainwindow.ui',self)
-		self._settings = Settings()
+
 		self._monitors = {}
 		self._threads = {}
-		self.connect_interface()
+		self._currently_moving = []
 
+		self._settings = Settings()
+		self.link_settings()
+		self.populate_default_settings()
+
+		self.add_stretches()
+		self.add_validators()
+
+		self.start_monitors()
+		self.generate_helpers()
+		self.connect_interface()
+		self.add_diagrams()
+		self.connect_timers()
+
+		self.connect_menubar()
+
+		self.final_setup()
+		self.show()
+
+
+	def connect_menubar(self):
+		self.actionSettings.triggered.connect(self.open_settings)
+
+
+	@QtCore.pyqtSlot()
+	def open_settings(self):
+		self.settings_window = SettingsDialog(self._settings)
+		try:
+			self.settings_window.exec_()
+		except json.decode.JSONDecodeError:
+			print('json problem')
+
+	def link_settings(self):
+		self._settingsgroup = {
+			self.VgrooveFrequency: (int,str,('SW','vgroovecontrol','frequency')),
+			self.VgrooveVoltage: (int,str,('SW','vgroovecontrol','voltage')),
+			self.ZcontrolVoltage: (int,str,('SW','zcontrol','voltage')),
+			self.ZcontrolFrequency: (int,str,('SW','zcontrol','frequency')),
+			self.ZLockbox: (bool,bool,('SW','zcontrol','lockstate')),
+			self.Probe_temp_auto_checkbox: (bool,bool,('SW','probecontrol','temperature-auto')),
+			self.Probe_temp_value: (int,str,('SW','probecontrol','temperature')),
+			self.ProbecontrolFrequency: (int,str,('SW','probecontrol','frequency')),
+			self.ProbecontrolPowerNum: (int,str,('SW','probecontrol','power')),
+			self.ProbecontrolPowerSlider: (int,int,('SW','probecontrol','power')),
+			self.ProbecontrolSteps: (int,str,('SW','probecontrol','steps')),
+			self.Static_voltage: (int,int,('SW','global','staticvoltage'))
+			}
+		self._measurementgroup = {
+			'T1':self.T1_value,
+			'T2':self.T2_value,
+			'T3':self.T3_value,
+			'T4':self.T4_value,
+			'T5':self.T5_value,
+			'T6':self.T6_value,
+			'T7':self.T7_value,
+			'T8':self.T8_value,
+			'opt':self.Optical_power_value}
+
+
+	def final_setup(self):
+		self.on_zlock_change(self._settings.get('SW','zcontrol','lockstate'))
+		self.on_probe_temp_auto(self.Probe_temp_auto_checkbox.checkState())
+
+	def populate_default_settings(self):
+		for i, (widget, (fromtype, totype, location)) in enumerate(self._settingsgroup.items()):
+			if type(widget) == QtWidgets.QLineEdit:
+				def _store_setting(widget=widget,loc=location,fromtype=fromtype):
+					new_text = widget.text()
+					try:
+						new_text = fromtype(new_text)
+					except ValueError:
+						pass	
+					self._settings.set(loc,new_text)
+				widget.editingFinished.connect(_store_setting)
+				widget.setText(totype(self._settings.get(*location)))
+			elif type(widget) == QtWidgets.QCheckBox:
+				def _store_setting(state,loc=location):
+					self._settings.set(loc,True if state != 0 else False)
+				widget.stateChanged.connect(_store_setting)
+				widget.setChecked(self._settings.get(*location))
+			elif type(widget) == QtWidgets.QSlider:
+				def _store_setting(value,loc=location):
+						self._settings.set(loc,value)
+				widget.valueChanged.connect(_store_setting)
+				widget.setValue(self._settings.get(*location))
+			elif type(widget) == QtWidgets.QDoubleSpinBox:
+				def _store_setting(widget=widget,loc=location,fromtype=fromtype):
+					new_value = widget.value()
+					try:
+						new_value = fromtype(new_value)
+					except ValueError:
+						pass	
+					self._settings.set(loc,new_value)
+				widget.editingFinished.connect(_store_setting)
+				widget.setValue(self._settings.get(*location))
+
+
+
+	def add_stretches(self):
+		self.horizontalLayoutTop.addStretch(1)
+		self.leftMenuLayout.addStretch(1)
+
+
+	def start_monitors(self):
 		self.start_monitor('longrangemover')
 		self.start_monitor('shortrangemover')
-		self.show()
+		self.start_monitor('ctc100')
+		self.start_monitor('lakeshore')
+		self.start_monitor('thorlabspowermeter')
+
+
+	def start_monitor(self,identifier):
+		if identifier == 'longrangemover':
+			self._spin_mover('longrangemover')
+		elif identifier == 'shortrangemover':
+			self._spin_mover('shortrangemover',staticvoltage=self._settings.get('SW','global','staticvoltage'))
+		elif identifier == 'ctc100':
+			self._spin_measurer('ctc100')
+		elif identifier == 'lakeshore':
+			self._spin_measurer('lakeshore')
+		elif identifier == 'thorlabspowermeter':
+			self._spin_measurer('thorlabspowermeter')
+		else:
+			raise ValueError
+
+
+	def _spin_mover(self,identifier,**kwargs):
+		selected_class = self._settings.get('SW',identifier,'device')
+		self._monitors[identifier] = movement_lookup(selected_class)(
+									**self._settings.get('HW',selected_class),
+									**self._settings.get('SW',identifier),
+									**kwargs)
+		self._threads[identifier] = launch_monitor_as_thread(self._monitors[identifier],
+															 self._settings.get('HW',selected_class,'lookup'),
+															 monitor=MoverPositionMonitor,
+															 signal=self.updatePositions,
+															 sleeptime=self._settings.get('SW',identifier,'sleeptime'))
+
+
+	def _spin_measurer(self,identifier,**kwargs):
+		selected_class = self._settings.get('SW',identifier,'device')
+		self._monitors[identifier] = measurement_lookup(selected_class)(
+									**self._settings.get('HW',selected_class),
+									**self._settings.get('SW',identifier),
+									**kwargs)
+		self._threads[identifier] = launch_monitor_as_thread(monitor=BaseMonitor,
+															 function=self._monitors[identifier].get,
+															 signal=self.updateMeasurement,
+															 sleeptime=self._settings.get('SW',identifier,'sleeptime'))
+
+
+	@QtCore.pyqtSlot(dict)
+	def on_update_measurement(self,values):
+		for key,value in values.items():
+			self._measurementgroup[key].setText(str(round(value,4)))
+
+
+	def add_diagrams(self):
+		self._diagram = Diagram(limits=self._settings.get('SW','shortrangemover','limits'))
+		self.canvas = self._diagram.canvas()
+		self.fig = self._diagram.fig()
+		self.graphsTabWidget.addTab(self.canvas,'Diagram')
+		self.canvas.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding))
+
+
+	def connect_timers(self):
+		self._vctimer = QtCore.QTimer()
+		self._vctimer.timeout.connect(self._static_voltage_change)
+		self._vctimer.setSingleShot(True)
+
+		self._movertimer = QtCore.QTimer()
+		self._movertimer.timeout.connect(self._longrangemove)
+
+		self._graphtimer = QtCore.QTimer()
+		self._graphtimer.timeout.connect(self._update_graphs)
+		self._graphtimer.start(GRAPH_UPDATE_RATE)
 
 
 	def connect_interface(self):
 		self.updatePositions.connect(self.on_update_positions)
+		self.updateMeasurement.connect(self.on_update_measurement)
+		self.Static_voltage.valueChanged.connect(self.on_static_voltage_change)
+		self.Probe_temp_auto_checkbox.stateChanged.connect(self.on_probe_temp_auto)
+		self.ProbecontrolPowerNum.textEdited.connect(self.on_probecontrol_powerchange)
+		self.ProbecontrolPowerSlider.valueChanged.connect(self.on_probecontrol_powerchange)
+		self.ZLockbox.stateChanged.connect(self.on_zlock_change)
+
+		for button in self.longrangemoverbuttongroup:
+			button.pressed.connect(self.on_longrangemover_pressed)
+			button.released.connect(self.on_longrangemover_released)
+
+		for button in self.shortrangemoverbuttongroup:
+			button.pressed.connect(self.on_shortrangemover_pressed)
+			button.released.connect(self.on_shortrangemover_released)
 
 
+	@QtCore.pyqtSlot(int)
+	def on_zlock_change(self,val):
+		for widget in [self.ZcontrolVoltage,self.ZcontrolFrequency,
+					   self.button_up_Z,self.button_down_Z,
+					   self.button_up_X,self.button_down_X,
+					   self.button_up_Y,self.button_down_Y]:
+			if val == 0: #if False (val is 3-state)
+				#widget.setReadOnly(False)
+				widget.setEnabled(True)
+			else:
+				#widget.setReadOnly(True)
+				widget.setEnabled(False)
+				self._settings.set(('SW','global','triggerbackedoffmessage'),True)
+
+
+	@QtCore.pyqtSlot(int)
+	@QtCore.pyqtSlot(str)
+	def on_probecontrol_powerchange(self,value):
+		if type(value) == str:
+			try:
+				self.ProbecontrolPowerSlider.setValue(int(value))
+			except ValueError:
+				pass
+		elif type(value) == int:
+			self.ProbecontrolPowerNum.setText(str(value))
+
+
+	def generate_helpers(self):
+		self.longrangemoverbuttongroup = {
+			self.button_up_X:[self._monitors['longrangemover'].move_up,'X'],
+			self.button_down_X:[self._monitors['longrangemover'].move_down,'X'],
+			self.button_up_Y:[self._monitors['longrangemover'].move_up,'Y'],
+			self.button_down_Y:[self._monitors['longrangemover'].move_down,'Y']}
+		self.shortrangemoverbuttongroup = {
+			self.button_up_Xopt:[self._monitors['shortrangemover'].move_up_continuous,'Xopt'],
+			self.button_down_Xopt:[self._monitors['shortrangemover'].move_down_continuous,'Xopt'],
+			self.button_up_Yopt:[self._monitors['shortrangemover'].move_up_continuous,'Yopt'],
+			self.button_down_Yopt:[self._monitors['shortrangemover'].move_down_continuous,'Yopt'],
+			self.button_up_Z:[self._monitors['shortrangemover'].move_up_continuous,'Z'],
+			self.button_down_Z:[self._monitors['shortrangemover'].move_down_continuous,'Z'] 
+			}
+
+	def add_validators(self):
+		print('no validators')
+
+
+	def resizeEvent(self,event):
+		self.fig.tight_layout()
+		self.canvas.draw_idle()
+		event.accept()
+
+
+	@QtCore.pyqtSlot()
+	def on_longrangemover_pressed(self):
+		self._longrangemove()
+		self._movertimer.start(MOVER_REPEAT_RATE)
+
+
+	@QtCore.pyqtSlot()
+	def on_longrangemover_released(self):
+		self._movertimer.stop()
+
+
+	@QtCore.pyqtSlot()
+	def _longrangemove(self):
+		for button, (func, param) in self.longrangemoverbuttongroup.items():
+			if button.isDown():
+				if self._settings.get('SW','global','triggerbackedoffmessage') == True and button in [self.button_up_X,
+					self.button_down_X,self.button_up_Y,self.button_down_Y]:
+						response = QtWidgets.QMessageBox.question(self,
+							'Warning','Is Z backed off?',
+							QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No,
+							QtWidgets.QMessageBox.No)
+						if response == QtWidgets.QMessageBox.Yes:
+							self._settings.set(('SW','global','triggerbackedoffmessage'),False)
+				else:
+					func(param)
+
+
+	@QtCore.pyqtSlot()
+	def on_shortrangemover_pressed(self):
+		for button, (func, param) in self.shortrangemoverbuttongroup.items():
+			if button.isDown():
+				func(param)
+				self._currently_moving.append(button)
+
+
+	@QtCore.pyqtSlot()
+	def on_shortrangemover_released(self):
+		for button in self._currently_moving:
+			if button.isDown() == False:
+				self._monitors['shortrangemover'].stop(self.shortrangemoverbuttongroup[button][1])
+				self._currently_moving.pop(self._currently_moving.index(button))
+
+
+	@QtCore.pyqtSlot(int)
+	def on_probe_temp_auto(self,val):
+		target_sensor = self._measurementgroup[self._settings.get('SW','global','probeautotempsensor')]#self.T1_value
+		if val == 0: #if False (val is 3-state)
+			self.Probe_temp_value.setReadOnly(False)
+			self.Probe_temp_value.setEnabled(True)
+			try:
+				self._probe_temp_value_connected_sensor.disconnect()
+			except AttributeError:
+				pass
+		else:
+			self.Probe_temp_value.setReadOnly(True)
+			self.Probe_temp_value.setEnabled(False)
+			target_sensor.textChanged.connect(self._probe_temp_auto_handler)
+			self._probe_temp_auto_handler(target_sensor.text())
+			self._probe_temp_value_connected_sensor = target_sensor
+
+
+	@QtCore.pyqtSlot(str)
+	def _probe_temp_auto_handler(self,value):
+		try:
+			value = int(float(value))
+			value = value if value >= 1 and value <=300 else 1 if value < 1 else 300
+		except ValueError:
+			pass
+		self.Probe_temp_value.setText(str(value))
+
+
+	@QtCore.pyqtSlot()
+	def on_static_voltage_change(self):
+		self._vctimer.start(500)
+
+
+	@QtCore.pyqtSlot()
+	def _update_graphs(self):
+		try:
+			self._diagram.set_janssen_position(int(self.X_value.text()),int(self.Y_value.text()))
+		except ValueError:
+			pass
+		self._diagram.set_attocube_position(float(self.Xopt_value.text()),float(self.Yopt_value.text()))
+		self.canvas.draw_idle()
+
+	@QtCore.pyqtSlot()
+	def _static_voltage_change(self):
+		self._monitors['shortrangemover'].set_static_amplitude(float(self.Static_voltage.cleanText()))
+
+
+	updateMeasurement = QtCore.pyqtSignal(dict)
 	updatePositions = QtCore.pyqtSignal(dict)
+
 
 	@QtCore.pyqtSlot(dict)
 	def on_update_positions(self,positions):
@@ -38,18 +377,3 @@ class MainWindow(QtWidgets.QMainWindow):
 			box.setText(value)
 
 
-	def start_monitor(self,identifier):
-		if identifier == 'longrangemover':
-			self._spin_mover('longrangemover')
-		elif identifier == 'shortrangemover':
-			self._spin_mover('shortrangemover')
-
-
-	def _spin_mover(self,identifier):
-		selected_class = self._settings.get('SW',identifier)
-		self._monitors[identifier] = movement_lookup(selected_class)(**self._settings.get('HW',selected_class))
-		self._threads[identifier] = launch_monitor_as_thread(self._monitors[identifier],
-															 self._settings.get('HW',selected_class,'lookup'),
-															 monitor=MoverPositionMonitor,
-															 signal=self.updatePositions,
-															 sleeptime=1)
