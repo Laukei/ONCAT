@@ -1,3 +1,5 @@
+import json
+
 from PyQt5 import QtGui, QtCore, QtWidgets #QtWebEngineWidgets
 from PyQt5.uic import loadUi
 
@@ -24,5 +26,9 @@ class SettingsDialog(QtWidgets.QDialog):
 			self.load_settings()
 
 	def accepted(self):
-		self._settings.set_plaintext(self.settingsTextEdit.toPlainText())
-		self._settings.save()
+		try:
+			self._settings.set_plaintext(self.settingsTextEdit.toPlainText())
+			self._settings.save()
+		except json.decoder.JSONDecodeError:
+			QtWidgets.QMessageBox.information(self, "Problem parsing changes",
+					"Unable to convert changed settings to JSON - changes were not saved.")

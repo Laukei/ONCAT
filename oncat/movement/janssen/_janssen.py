@@ -10,6 +10,26 @@ class Janssen(Mover):
 			server=kwargs.get('server',False)
 		)
 		self._lookup = kwargs.get('lookup',{})
+		self._settings = {
+			'X':{
+				'frequency':None,
+				'temperature':None,
+				'steps':None,
+				'step_size':None
+			},
+			'Y':{
+				'frequency':None,
+				'temperature':None,
+				'steps':None,
+				'step_size':None
+			}
+		}
+		self._function_lookup = {
+			'frequency':self._m.set_frequency,
+			'temperature':self._m.set_temperature,
+			'steps':self._m.set_steps,
+			'step_size':self._m.set_step_size
+		}
 
 
 	def get_position(self,channel):
@@ -22,16 +42,28 @@ class Janssen(Mover):
 		self._m.move(self._lookup.get(channel,channel),BACKWARD)
 
 	def set_frequency(self,channel,frequency):
-		self._m.set_frequency(self._lookup.get(channel,channel),frequency)
+		self._setter('frequency',channel,frequency)
 
 	def set_temperature(self,channel,temperature):
-		self._m.set_temperature(self._lookup.get(channel,channel),temperature)
+		self._setter('temperature',channel,temperature)
 		
 	def set_steps(self,channel,steps):
-		self._m.set_steps(self._lookup.get(channel,channel),steps)
+		self._setter('steps',channel,steps)
 		
 	def set_step_size(self,channel,step_size):
-		self._m.set_step_size(self._lookup.get(channel,channel),step_size)
+		self._setter('step_size',channel,step_size)
+
+	def _setter(self,name,channel,value):
+		if self._settings[channel][name] != value:
+			self._function_lookup[name](self._lookup.get(channel,channel),value)
+			self._settings[channel][name] = value
+
+	def set_settings(self,bundle):
+		for setting, [value, axes] in bundle.items():
+			for axis in axes:
+				self._setter(setting,axis,value)
+
+
 
 
 class FakeJanssen(Janssen):

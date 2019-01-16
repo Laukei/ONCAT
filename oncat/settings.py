@@ -117,11 +117,8 @@ class Settings:
 		return json.dumps(DEFAULT_SETTINGS)
 
 	def set_plaintext(self,text):
-		try:
-			self._settings = json.loads(text)
-			self.save()
-		except json.decoder.JSONDecodeError:
-			print('error converting settings to json')
+		self._settings = json.loads(text)
+		self.save()
 
 
 	def save(self,filename=None):

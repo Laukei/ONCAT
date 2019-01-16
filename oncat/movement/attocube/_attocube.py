@@ -18,6 +18,11 @@ class FakeANC350(Mover):
 		self._range = {1:[0,5],2:[0,5],3:[0,5]}
 		self.set_limits(kwargs.get('limits',{}))
 		self._static_amp = kwargs.get('staticvoltage',2)
+		self._settings_index = {
+			'frequency':self._freq,
+			'voltage':self._volt,
+			'step':self._step
+		}
 
 
 	def get_position(self,channel):
@@ -80,3 +85,11 @@ class FakeANC350(Mover):
 
 	def set_static_amplitude(self,static_amp):
 		self._static_amp = static_amp
+
+	def _setter(self,name,channel,value):
+		self._settings_index[name][self._lookup.get(channel,channel)] = value
+
+	def set_settings(self,bundle):
+		for setting, [value, axes] in bundle.items():
+			for axis in axes:
+				self._setter(setting,axis,value)

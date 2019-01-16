@@ -907,6 +907,9 @@
            <string>V-groove control</string>
           </property>
           <widget class="QLineEdit" name="lineEdit_18">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="geometry">
             <rect>
              <x>250</x>
@@ -920,6 +923,9 @@
            </property>
           </widget>
           <widget class="QLabel" name="label_16">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="geometry">
             <rect>
              <x>170</x>
@@ -933,6 +939,9 @@
            </property>
           </widget>
           <widget class="QLineEdit" name="lineEdit_17">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="geometry">
             <rect>
              <x>90</x>
@@ -943,6 +952,9 @@
            </property>
           </widget>
           <widget class="QLineEdit" name="lineEdit_16">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="geometry">
             <rect>
              <x>250</x>
@@ -956,6 +968,9 @@
            </property>
           </widget>
           <widget class="QLabel" name="label_18">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="geometry">
             <rect>
              <x>20</x>
@@ -969,6 +984,9 @@
            </property>
           </widget>
           <widget class="QLabel" name="label_15">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="geometry">
             <rect>
              <x>20</x>
@@ -982,6 +1000,9 @@
            </property>
           </widget>
           <widget class="QLabel" name="label_17">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="geometry">
             <rect>
              <x>170</x>
@@ -995,6 +1016,9 @@
            </property>
           </widget>
           <widget class="QLineEdit" name="lineEdit_15">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="geometry">
             <rect>
              <x>90</x>
