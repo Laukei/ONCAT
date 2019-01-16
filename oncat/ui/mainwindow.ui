@@ -91,7 +91,7 @@
         <property name="title">
          <string>Global values</string>
         </property>
-        <widget class="QLineEdit" name="T1_value">
+        <widget class="QLineEdit" name="global_temp1">
          <property name="geometry">
           <rect>
            <x>60</x>
@@ -130,7 +130,7 @@
           <string>T2</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="T2_value">
+        <widget class="QLineEdit" name="global_temp2">
          <property name="geometry">
           <rect>
            <x>180</x>
@@ -159,7 +159,7 @@
           <string>T3</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="T3_value">
+        <widget class="QLineEdit" name="global_temp3">
          <property name="geometry">
           <rect>
            <x>300</x>
@@ -175,7 +175,7 @@
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QLineEdit" name="T4_value">
+        <widget class="QLineEdit" name="global_temp4">
          <property name="geometry">
           <rect>
            <x>420</x>
@@ -201,7 +201,7 @@
           <string>T4</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="Optical_power_value">
+        <widget class="QLineEdit" name="global_opticalpower">
          <property name="geometry">
           <rect>
            <x>300</x>
@@ -379,7 +379,7 @@
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QDoubleSpinBox" name="Static_voltage">
+        <widget class="QDoubleSpinBox" name="global_voltage">
          <property name="geometry">
           <rect>
            <x>60</x>
@@ -430,7 +430,7 @@
           <string>T6</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="T5_value">
+        <widget class="QLineEdit" name="global_temp5">
          <property name="geometry">
           <rect>
            <x>540</x>
@@ -443,7 +443,7 @@
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QLineEdit" name="T6_value">
+        <widget class="QLineEdit" name="global_temp6">
          <property name="geometry">
           <rect>
            <x>660</x>
@@ -485,7 +485,7 @@
           <string>T5</string>
          </property>
         </widget>
-        <widget class="QLineEdit" name="T8_value">
+        <widget class="QLineEdit" name="global_temp8">
          <property name="geometry">
           <rect>
            <x>900</x>
@@ -498,7 +498,7 @@
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QLineEdit" name="T7_value">
+        <widget class="QLineEdit" name="global_temp7">
          <property name="geometry">
           <rect>
            <x>780</x>
@@ -541,6 +541,9 @@
               <height>220</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>This controls probe movement in-plane with the sample (X-Y axis) using long range positioners</string>
+            </property>
             <property name="title">
              <string>Probe control</string>
             </property>
@@ -557,7 +560,7 @@
               <string>Temp</string>
              </property>
             </widget>
-            <widget class="QLineEdit" name="Probe_temp_value">
+            <widget class="QLineEdit" name="probe_temp">
              <property name="geometry">
               <rect>
                <x>60</x>
@@ -567,7 +570,7 @@
               </rect>
              </property>
             </widget>
-            <widget class="QCheckBox" name="Probe_temp_auto_checkbox">
+            <widget class="QCheckBox" name="probe_temp_auto">
              <property name="geometry">
               <rect>
                <x>160</x>
@@ -580,7 +583,7 @@
               <string>Auto</string>
              </property>
             </widget>
-            <widget class="QLineEdit" name="ProbecontrolFrequency">
+            <widget class="QLineEdit" name="probe_frequency">
              <property name="geometry">
               <rect>
                <x>60</x>
@@ -603,7 +606,7 @@
               <string>Freq</string>
              </property>
             </widget>
-            <widget class="QLineEdit" name="ProbecontrolSteps">
+            <widget class="QLineEdit" name="probe_steps">
              <property name="geometry">
               <rect>
                <x>170</x>
@@ -629,7 +632,7 @@
               <string>Steps</string>
              </property>
             </widget>
-            <widget class="QSlider" name="ProbecontrolPowerSlider">
+            <widget class="QSlider" name="probe_power_slider">
              <property name="geometry">
               <rect>
                <x>60</x>
@@ -661,7 +664,7 @@
               <string>Power</string>
              </property>
             </widget>
-            <widget class="QLineEdit" name="ProbecontrolPowerNum">
+            <widget class="QLineEdit" name="probe_power">
              <property name="geometry">
               <rect>
                <x>190</x>
@@ -726,6 +729,29 @@
               <string>Up X</string>
              </property>
             </widget>
+            <widget class="QLabel" name="probe_locked">
+             <property name="geometry">
+              <rect>
+               <x>70</x>
+               <y>140</y>
+               <width>131</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>21</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string>LOCKED</string>
+             </property>
+            </widget>
            </widget>
           </item>
           <item>
@@ -741,6 +767,9 @@
               <width>130</width>
               <height>220</height>
              </size>
+            </property>
+            <property name="toolTip">
+             <string>This controls the sample's distance from the optics and probe head (Z axis) using the short-range positioners</string>
             </property>
             <property name="title">
              <string>Z control</string>
@@ -758,7 +787,7 @@
               <string>Freq</string>
              </property>
             </widget>
-            <widget class="QLineEdit" name="ZcontrolFrequency">
+            <widget class="QLineEdit" name="z_frequency">
              <property name="geometry">
               <rect>
                <x>50</x>
@@ -768,7 +797,7 @@
               </rect>
              </property>
             </widget>
-            <widget class="QLineEdit" name="ZcontrolVoltage">
+            <widget class="QLineEdit" name="z_voltage">
              <property name="geometry">
               <rect>
                <x>50</x>
@@ -791,7 +820,7 @@
               <string>Volt</string>
              </property>
             </widget>
-            <widget class="QCheckBox" name="ZLockbox">
+            <widget class="QCheckBox" name="z_lock">
              <property name="geometry">
               <rect>
                <x>20</x>
@@ -830,6 +859,29 @@
               <string>Down</string>
              </property>
             </widget>
+            <widget class="QLabel" name="z_locked">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>110</y>
+               <width>131</width>
+               <height>41</height>
+              </rect>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>21</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="text">
+              <string>LOCKED</string>
+             </property>
+            </widget>
            </widget>
           </item>
          </layout>
@@ -847,6 +899,9 @@
             <width>0</width>
             <height>322</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>This controls the optical head's position relative to the sample and probe in the X-Y plane using the short range positioners</string>
           </property>
           <property name="title">
            <string>V-groove control</string>
@@ -949,7 +1004,7 @@
             </rect>
            </property>
           </widget>
-          <widget class="QLineEdit" name="VgrooveFrequency">
+          <widget class="QLineEdit" name="vgroove_frequency">
            <property name="geometry">
             <rect>
              <x>90</x>
@@ -972,7 +1027,7 @@
             <string>Freq</string>
            </property>
           </widget>
-          <widget class="QLineEdit" name="VgrooveVoltage">
+          <widget class="QLineEdit" name="vgroove_voltage">
            <property name="geometry">
             <rect>
              <x>250</x>

@@ -28,7 +28,8 @@ DEFAULT_SETTINGS = {
 	'SW':{ # software defaults
 		'longrangemover':{
 			'device':'FakeJanssen',
-			'sleeptime':0.5
+			'sleeptime':0.5,
+			'repeatrate':250 #ms
 			},
 		'shortrangemover':{
 			'device':'FakeANC350',
@@ -54,7 +55,8 @@ DEFAULT_SETTINGS = {
 		'global':{
 			'staticvoltage':0, #start with 0 voltage to prevent heating on startup
 			'probeautotempsensor':'T1',
-			'triggerbackedoffmessage':False
+			'triggerbackedoffmessage':False,
+			'graphupdaterate':250 # ms
 		},
 		'ctc100':{
 			'device':'FakeThermometer',
@@ -109,7 +111,7 @@ class Settings:
 
 
 	def get_plaintext(self):
-		return json.dumps(self._settings,indent=2,sort_keys=True)
+		return json.dumps(self._settings,indent=4,sort_keys=True)
 
 	def get_defaults(self):
 		return json.dumps(DEFAULT_SETTINGS)

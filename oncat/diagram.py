@@ -72,8 +72,8 @@ class Diagram:
 		self._Yopt = Yopt
 		self._ax2_line.set_xdata([self._Xopt])
 		self._ax2_line.set_ydata([self._Yopt])
-		self._canvas.draw()
-		self._canvas.flush_events()
+		#self._canvas.draw_idle()
+		#self._canvas.flush_events()
 
 
 	def set_limits(self,limits):
