@@ -1376,10 +1376,7 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionNew"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSave_As"/>
-    <addaction name="actionOpen"/>
+    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -1433,6 +1430,11 @@
   <action name="actionSettings">
    <property name="text">
     <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
    </property>
   </action>
  </widget>
