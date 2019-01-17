@@ -1,8 +1,15 @@
 from .. import Mover
 from pyjanssen import MCM, FORWARD, BACKWARD
 
+LIMITS = {
+	'frequency':[int,0,600],
+	'temperature':[int,0,300],
+	'steps':[int,0,1000],
+	'step_size':[int,0,100]
+}
 
 class Janssen(Mover):
+	LIMITS = LIMITS
 	def __init__(self,**kwargs):
 		self._m = MCM(
 			exe=kwargs.get('executable','.'),
@@ -34,6 +41,10 @@ class Janssen(Mover):
 
 	def get_position(self,channel):
 		return self._m.get_position(self._lookup.get(channel,channel))
+
+	@staticmethod
+	def get_limits():
+		return LIMITS
 
 	def move_up(self,channel):
 		self._m.move(self._lookup.get(channel,channel),FORWARD)

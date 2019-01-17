@@ -28,11 +28,12 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.populate_default_settings()
 
 		self.add_stretches()
-		self.add_validators()
 
-		self.start_monitors()
+		self.instantiate_hardware()
 		self.generate_helpers()
 		self.connect_interface()
+		self.add_validators()
+
 		self.add_diagrams()
 		self.connect_timers()
 
@@ -138,12 +139,12 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.leftMenuLayout.addStretch(1)
 
 
-	def start_monitors(self):
+	def instantiate_hardware(self):
 		for monitor in ('longrangemover','shortrangemover','ctc100','lakeshore','thorlabspowermeter'):
-			self.start_monitor(monitor)
+			self._instantiate_hardware(monitor)
 
 
-	def start_monitor(self,identifier):
+	def _instantiate_hardware(self,identifier):
 		if identifier == 'longrangemover':
 			self._spin_mover('longrangemover')
 		elif identifier == 'shortrangemover':
@@ -293,7 +294,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	def add_validators(self):
-		print('no validators')
+		for name, settingsgroup in [['longrangemover',self.probe_settingsgroup],
+									['shortrangemover',self.vgroove_settingsgroup],
+									['shortrangemover',self.z_settingsgroup]]:
+			for key in settingsgroup:
+				self._add_validator(name,key,settingsgroup)
+
+
+	def _add_validator(self,movertype,name,settingsgroup):
+		#print(movertype,name,self._devices[movertype].get_limits()[name])
+		limits = self._devices[movertype].get_limits()
+		if limits[name][0] == int:
+			validator = QtGui.QIntValidator(limits[name][1],limits[name][2])
+			settingsgroup[name][0].setValidator(validator)
 
 
 	def resizeEvent(self,event):

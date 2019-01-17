@@ -4,11 +4,18 @@ import time
 
 from .. import Mover
 
+LIMITS = {
+	'frequency':[int,0,1000],
+	'voltage':[int,0,70],
+	'steps':[int,0,1000],
+	'static_amplitude':[float,0,2]
+}
 
 class ANC350(Mover):
 	pass
 
 class FakeANC350(Mover):
+	LIMITS = LIMITS
 	def __init__(self,**kwargs):
 		self._pos = {1:2.5, 2:2.5, 3:2.5}
 		self._lookup = kwargs.get('lookup',{})
@@ -24,6 +31,9 @@ class FakeANC350(Mover):
 			'step':self._step
 		}
 
+	@staticmethod
+	def get_limits():
+		return LIMITS
 
 	def get_position(self,channel):
 		return self._pos[self._lookup.get(channel,channel)] + ((random.random() - 0.5) * abs(2 - self._static_amp)) + (random.random()*0.01) if self._static_amp != 0 else -1
