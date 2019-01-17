@@ -18,7 +18,7 @@ DEFAULT_SETTINGS = {
 			'lookup':{'Xopt':1,'Yopt':2,'Z':3}
 		},
 		'ANC350':{
-			'lookup':{'Xopt':1,'Yopt':2,'Z':3}
+			'lookup':{'Xopt':0,'Yopt':1,'Z':2}
 		},
 		'FakeThermometer':{
 		},

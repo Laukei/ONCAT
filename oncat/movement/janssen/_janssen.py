@@ -1,5 +1,7 @@
 from .. import Mover
 from pyjanssen import MCM, FORWARD, BACKWARD
+from pyjanssen.janssen_mcm import CacliError
+import time
 
 LIMITS = {
 	'frequency':[int,0,600],
@@ -40,7 +42,13 @@ class Janssen(Mover):
 
 
 	def get_position(self,channel):
-		return self._m.get_position(self._lookup.get(channel,channel))
+		for i in range(5):
+			try:
+				return self._m.get_position(self._lookup.get(channel,channel))
+			except (IndexError,CacliError) as e:
+				print('error reading position ({}/5): {}'.format(channel,i+1,e))
+				time.sleep(0.1)
+		raise CacliError('Unable to speak to cacli.exe')
 
 	@staticmethod
 	def get_limits():

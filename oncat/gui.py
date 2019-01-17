@@ -3,6 +3,7 @@ import copy
 
 from PyQt5 import QtGui, QtCore, QtWidgets #QtWebEngineWidgets
 from PyQt5.uic import loadUi
+from pyjanssen.janssen_mcm import CacliError
 
 from .settings import Settings
 from .settingsgui import SettingsDialog
@@ -67,7 +68,7 @@ class MainWindow(QtWidgets.QMainWindow):
 			self.probe_power: 			(int,str,('SW','probecontrol','power')),
 			self.probe_power_slider: 	(int,int,('SW','probecontrol','power')),
 			self.probe_steps: 			(int,str,('SW','probecontrol','steps')),
-			self.global_voltage: 		(int,int,('SW','global','staticvoltage'))
+			self.global_voltage: 		(float,str,('SW','global','staticvoltage'))
 			}
 		self._measurementgroup = {
 			'T1':self.global_temp1,
@@ -367,7 +368,10 @@ class MainWindow(QtWidgets.QMainWindow):
 						if response == QtWidgets.QMessageBox.Yes:
 							self._settings.set(('SW','global','triggerbackedoffmessage'),False)
 				else:
-					func(param)
+					try:
+						func(param)
+					except (IndexError,CacliError) as e:
+						print('error moving: {}'.format(e))
 
 
 	@QtCore.pyqtSlot()
