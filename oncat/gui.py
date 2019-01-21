@@ -1,5 +1,6 @@
 import sys
 import copy
+import logging
 
 from PyQt5 import QtGui, QtCore, QtWidgets #QtWebEngineWidgets
 from PyQt5.uic import loadUi
@@ -12,6 +13,8 @@ from .monitor import launch_monitor_as_thread, MoverPositionMonitor, BaseMonitor
 from .movement import movement_lookup
 from .measurement import measurement_lookup
 
+logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class MainWindow(QtWidgets.QMainWindow):
 	def __init__(self):
@@ -88,6 +91,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	def final_setup(self):
+		self._going_to = {'Xopt':False, 'Yopt':False}
 		self.on_zlock_change(self._settings.get('SW','zcontrol','lockstate'))
 		self.on_probe_temp_auto(self.probe_temp_auto.checkState())
 
@@ -216,6 +220,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.probe_power.textEdited.connect(self.on_probecontrol_powerchange)
 		self.probe_power_slider.valueChanged.connect(self.on_probecontrol_powerchange)
 		self.z_lock.stateChanged.connect(self.on_zlock_change)
+		self.button_goto.clicked.connect(self.on_goto_clicked)
 
 		for button in self.probe_buttongroup:
 			button.pressed.connect(self.on_longrangemover_pressed)
@@ -303,7 +308,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	def _add_validator(self,movertype,name,settingsgroup):
-		#print(movertype,name,self._devices[movertype].get_limits()[name])
 		limits = self._devices[movertype].get_limits()
 		if limits[name][0] == int:
 			validator = QtGui.QIntValidator(limits[name][1],limits[name][2])
@@ -344,6 +348,36 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	@QtCore.pyqtSlot()
+	def on_goto_clicked(self):
+		was_moving = False
+		for channel, moving in self._going_to.items():
+			if moving:
+				was_moving = True
+				self._devices['shortrangemover'].stop(channel)
+				self._going_to[channel] = False
+		if was_moving:
+			self.button_goto.setText('Go')
+		else:
+			target = {}
+			try:
+				target['Xopt'] = float(self.target_Xopt.text())
+			except ValueError:
+				pass
+			try:
+				target['Yopt'] = float(self.target_Yopt.text())
+			except ValueError:
+				pass
+
+			bundle = self._make_bundle(self.vgroove_settingsgroup)
+			self._devices['shortrangemover'].set_settings(bundle)
+			for channel, pos in target.items():
+				self._devices['shortrangemover'].move_to(channel,pos)
+				self._going_to[channel] = True
+			if len(target) > 0:
+				self.button_goto.setText('Stop')
+
+
+	@QtCore.pyqtSlot()
 	def on_longrangemover_pressed(self):
 		self._set_device_settings()
 		self._longrangemove()
@@ -371,7 +405,7 @@ class MainWindow(QtWidgets.QMainWindow):
 					try:
 						func(param)
 					except (IndexError,CacliError) as e:
-						print('error moving: {}'.format(e))
+						logger.error('error moving: {}'.format(e))
 
 
 	@QtCore.pyqtSlot()

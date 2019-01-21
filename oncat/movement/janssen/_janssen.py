@@ -1,7 +1,12 @@
-from .. import Mover
+import time
+import logging
+
 from pyjanssen import MCM, FORWARD, BACKWARD
 from pyjanssen.janssen_mcm import CacliError
-import time
+
+from .. import Mover
+
+logger = logging.getLogger(__name__)
 
 LIMITS = {
 	'frequency':[int,0,600],
@@ -42,11 +47,11 @@ class Janssen(Mover):
 
 
 	def get_position(self,channel):
-		for i in range(5):
+		for i in range(10):
 			try:
 				return self._m.get_position(self._lookup.get(channel,channel))
 			except (IndexError,CacliError) as e:
-				print('error reading position ({}/5): {}'.format(channel,i+1,e))
+				logger.warning('error reading position ({}/5): {}'.format(channel,i+1,e))
 				time.sleep(0.1)
 		raise CacliError('Unable to speak to cacli.exe')
 
