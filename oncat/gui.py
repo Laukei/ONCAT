@@ -12,6 +12,7 @@ from .diagram import Diagram
 from .monitor import launch_monitor_as_thread, MoverPositionMonitor, BaseMonitor
 from .movement import movement_lookup
 from .measurement import measurement_lookup
+from .manager import RasterManager
 
 logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.setWindowTitle(self.name_of_application)
 
 		self._devices = {}
+		self._managers = {}
 		self._threads = {}
 		self._currently_moving = []
 
@@ -34,6 +36,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.add_stretches()
 
 		self.instantiate_hardware()
+		self.instantiate_managers()
 		self.generate_helpers()
 		self.connect_interface()
 		self.add_validators()
@@ -46,6 +49,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
 		self.final_setup()
 		self.show()
+
+
+	def instantiate_managers(self):
+		self._managers['rastermanager'] = RasterManager(self._devices['shortrangemover'],self._devices['thorlabspowermeter'].get,
+				signal=self.scanFinished)
 
 
 	def connect_menubar(self):
@@ -221,6 +229,8 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.probe_power_slider.valueChanged.connect(self.on_probecontrol_powerchange)
 		self.z_lock.stateChanged.connect(self.on_zlock_change)
 		self.button_goto.clicked.connect(self.on_goto_clicked)
+		self.button_scan.clicked.connect(self.on_scan_clicked)
+		self.scanFinished.connect(self.on_scan_finished)
 
 		for button in self.probe_buttongroup:
 			button.pressed.connect(self.on_longrangemover_pressed)
@@ -378,6 +388,30 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	@QtCore.pyqtSlot()
+	def on_scan_clicked(self):
+		manager = self._managers['rastermanager']
+		if manager.active:
+			manager.stop()
+			self.button_scan.setText('Scan')
+		else:
+			range_ = []
+			for widget in (self.from_Xopt, self.to_Xopt, self.from_Yopt, self.to_Yopt):
+				try:
+					range_.append(float(widget.text()))
+				except:
+					logger.error('Tried to run scan without setting value for {}'.format(widget))
+			manager.set_range(range_)
+			bundle = self._make_bundle(self.vgroove_settingsgroup)
+			manager.mover.set_settings(bundle)
+
+			try:
+				manager.run()
+				self.button_scan.setText('Stop')
+			except (AssertionError,ValueError):
+				logger.error('Failed to run manager')
+
+
+	@QtCore.pyqtSlot()
 	def on_longrangemover_pressed(self):
 		self._set_device_settings()
 		self._longrangemove()
@@ -478,6 +512,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
 	updateMeasurement = QtCore.pyqtSignal(dict)
 	updatePositions = QtCore.pyqtSignal(dict)
+	scanFinished = QtCore.pyqtSignal()
+
+	@QtCore.pyqtSlot()
+	def on_scan_finished(self):
+		print('scan finished uuuuuuu')
+		print(self._managers['rastermanager'].get_data())
+		self.button_scan.setText('Scan')
 
 
 	@QtCore.pyqtSlot(dict)

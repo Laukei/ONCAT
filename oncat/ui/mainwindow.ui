@@ -1087,7 +1087,7 @@
             </rect>
            </property>
            <property name="currentIndex">
-            <number>1</number>
+            <number>2</number>
            </property>
            <widget class="QWidget" name="tab">
             <attribute name="title">
@@ -1217,7 +1217,7 @@
             <attribute name="title">
              <string>Scan</string>
             </attribute>
-            <widget class="QLineEdit" name="lineEdit_24">
+            <widget class="QLineEdit" name="from_Xopt">
              <property name="geometry">
               <rect>
                <x>90</x>
@@ -1279,7 +1279,7 @@
               <string>Yopt from</string>
              </property>
             </widget>
-            <widget class="QLineEdit" name="lineEdit_21">
+            <widget class="QLineEdit" name="to_Xopt">
              <property name="geometry">
               <rect>
                <x>250</x>
@@ -1292,7 +1292,7 @@
               <string/>
              </property>
             </widget>
-            <widget class="QLineEdit" name="lineEdit_19">
+            <widget class="QLineEdit" name="from_Yopt">
              <property name="geometry">
               <rect>
                <x>90</x>
@@ -1302,7 +1302,7 @@
               </rect>
              </property>
             </widget>
-            <widget class="QLineEdit" name="lineEdit_23">
+            <widget class="QLineEdit" name="to_Yopt">
              <property name="geometry">
               <rect>
                <x>250</x>
@@ -1315,7 +1315,7 @@
               <string/>
              </property>
             </widget>
-            <widget class="QPushButton" name="pushButton_12">
+            <widget class="QPushButton" name="button_scan">
              <property name="geometry">
               <rect>
                <x>140</x>

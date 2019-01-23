@@ -174,6 +174,20 @@ class FakeANC350(Mover):
 	def stop(self,channel):
 		self._stopMoving(self._lookup.get(channel,channel))
 
+	def can_move(self,channel,**kwargs):
+		axis = self._lookup.get(channel,channel)
+		pos = self._pos[axis]
+		direction = kwargs.get('direction',None)
+		target = kwargs.get('target',None)
+		if self._static_amp == 0:
+			return False
+		elif direction != None and ((pos >= self._limits[axis][0] or direction == 1) and (pos <= self._limits[axis][1] or direction == -1)):
+			return True
+		elif target != None and target >= self._limits[axis][0] and target <= self._limits[axis][1]:
+			return True
+		else:
+			return False
+
 	def _moveContinuous(self,channel,direction):
 		self.kill_thread = False
 		def move_axis():
