@@ -8,7 +8,7 @@ from pyjanssen.janssen_mcm import CacliError
 
 from .settings import Settings
 from .settingsgui import SettingsDialog
-from .diagram import Diagram
+from .diagram import Diagram, Scan
 from .monitor import launch_monitor_as_thread, MoverPositionMonitor, BaseMonitor
 from .movement import movement_lookup
 from .measurement import measurement_lookup
@@ -102,6 +102,15 @@ class MainWindow(QtWidgets.QMainWindow):
 		self._going_to = {'Xopt':False, 'Yopt':False}
 		self.on_zlock_change(self._settings.get('SW','zcontrol','lockstate'))
 		self.on_probe_temp_auto(self.probe_temp_auto.checkState())
+		self.set_current_diagram(0)
+		self.graphsTabWidget.currentChanged.connect(self.set_current_diagram)
+
+
+	@QtCore.pyqtSlot(int)
+	def set_current_diagram(self,index_):
+		self._active_diagram = self._diagrams[index_]
+		self.canvas = self._canvases[index_]
+		self.fig = self._figs[index_]
 
 
 	def set_lock(self,state=True,controlset=None):
@@ -201,10 +210,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
 	def add_diagrams(self):
 		self._diagram = Diagram(limits=self._settings.get('SW','shortrangemover','limits'))
-		self.canvas = self._diagram.canvas()
-		self.fig = self._diagram.fig()
-		self.graphsTabWidget.addTab(self.canvas,'Diagram')
-		self.canvas.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding))
+		self.diagram_canvas = self._diagram.canvas()
+		self.diagram_fig = self._diagram.fig()
+		self.graphsTabWidget.addTab(self.diagram_canvas,'Diagram')
+		self.diagram_canvas.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding))
+
+
+		self._scan = Scan(limits=self._settings.get('SW','shortrangemover','limits'))
+		self.scan_canvas = self._scan.canvas()
+		self.scan_fig = self._scan.fig()
+		self.graphsTabWidget.addTab(self.scan_canvas,'Scan')
+		self.scan_canvas.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding))
+
+		self._canvases = [self.diagram_canvas, self.scan_canvas]
+		self._figs = [self.diagram_fig, self.scan_fig]
+		self._diagrams = [self._diagram, self._scan]
 
 
 	def connect_timers(self):
@@ -495,12 +515,12 @@ class MainWindow(QtWidgets.QMainWindow):
 	@QtCore.pyqtSlot()
 	def _update_graphs(self):
 		try:
-			self._diagram.set_attocube_position(float(self.Xopt_value.text()),float(self.Yopt_value.text()))
+			self._active_diagram.set_attocube_position(float(self.Xopt_value.text()),float(self.Yopt_value.text()))
 		except ValueError:
 			pass
 		try:
-			self._diagram.set_janssen_position(int(self.X_value.text()),int(self.Y_value.text()))
-		except ValueError:
+			self._active_diagram.set_janssen_position(int(self.X_value.text()),int(self.Y_value.text()))
+		except (ValueError,AttributeError):
 			pass
 		self.canvas.draw_idle()
 
