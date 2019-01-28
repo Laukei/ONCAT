@@ -5,6 +5,7 @@ import logging
 from PyQt5 import QtGui, QtCore, QtWidgets #QtWebEngineWidgets
 from PyQt5.uic import loadUi
 from pyjanssen.janssen_mcm import CacliError
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 from .settings import Settings
 from .settingsgui import SettingsDialog
@@ -172,7 +173,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		elif identifier == 'shortrangemover':
 			self._spin_mover('shortrangemover',staticvoltage=self._settings.get('SW','global','staticvoltage'))
 		elif identifier in ('ctc100','lakeshore','thorlabspowermeter'):
-			self._spin_measurer(identifier)
+			self._spin_measurer(identifier,mover=self._devices['shortrangemover'])
 		else:
 			raise ValueError
 
@@ -209,22 +210,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	def add_diagrams(self):
-		self._diagram = Diagram(limits=self._settings.get('SW','shortrangemover','limits'))
-		self.diagram_canvas = self._diagram.canvas()
-		self.diagram_fig = self._diagram.fig()
-		self.graphsTabWidget.addTab(self.diagram_canvas,'Diagram')
-		self.diagram_canvas.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding))
-
-
-		self._scan = Scan(limits=self._settings.get('SW','shortrangemover','limits'))
-		self.scan_canvas = self._scan.canvas()
-		self.scan_fig = self._scan.fig()
-		self.graphsTabWidget.addTab(self.scan_canvas,'Scan')
-		self.scan_canvas.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding))
-
-		self._canvases = [self.diagram_canvas, self.scan_canvas]
-		self._figs = [self.diagram_fig, self.scan_fig]
-		self._diagrams = [self._diagram, self._scan]
+		self._canvases = []
+		self._figs = []
+		self._diagrams = []
+		for diagram, name in ((Diagram,'Diagram'), (Scan,'Scan')):
+			self._diagrams.append(diagram(limits=self._settings.get('SW','shortrangemover','limits')))
+			self._canvases.append(self._diagrams[-1].canvas())
+			self._figs.append(self._diagrams[-1].fig())
+			widget = QtWidgets.QWidget()
+			layout = QtWidgets.QVBoxLayout()
+			layout.addWidget(self._canvases[-1])
+			layout.addWidget(NavigationToolbar(self._canvases[-1],self))
+			widget.setLayout(layout)
+			self.graphsTabWidget.addTab(widget, name)
+			self._canvases[-1].setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding))
+			self._figs[-1].tight_layout()
+			self._canvases[-1].draw_idle()
 
 
 	def connect_timers(self):
@@ -427,8 +428,8 @@ class MainWindow(QtWidgets.QMainWindow):
 			try:
 				manager.run()
 				self.button_scan.setText('Stop')
-			except (AssertionError,ValueError):
-				logger.error('Failed to run manager')
+			except (AssertionError,ValueError) as e:
+				logger.error('Failed to run manager: {}'.format(e))
 
 
 	@QtCore.pyqtSlot()
@@ -522,6 +523,13 @@ class MainWindow(QtWidgets.QMainWindow):
 			self._active_diagram.set_janssen_position(int(self.X_value.text()),int(self.Y_value.text()))
 		except (ValueError,AttributeError):
 			pass
+		try:
+			rasterdata = self._managers['rastermanager'].get_data()
+			self._active_diagram.set_scan_data(rasterdata['Xopt'],rasterdata['Yopt'],rasterdata['meas'])
+		except ValueError as e:
+			print(e)
+		except AttributeError: 
+			pass
 		self.canvas.draw_idle()
 
 
@@ -534,10 +542,9 @@ class MainWindow(QtWidgets.QMainWindow):
 	updatePositions = QtCore.pyqtSignal(dict)
 	scanFinished = QtCore.pyqtSignal()
 
+
 	@QtCore.pyqtSlot()
 	def on_scan_finished(self):
-		print('scan finished uuuuuuu')
-		print(self._managers['rastermanager'].get_data())
 		self.button_scan.setText('Scan')
 
 
