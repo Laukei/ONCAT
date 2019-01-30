@@ -80,7 +80,11 @@ class MainWindow(QtWidgets.QMainWindow):
 			self.probe_power: 			(int,str,('SW','probecontrol','power')),
 			self.probe_power_slider: 	(int,int,('SW','probecontrol','power')),
 			self.probe_steps: 			(int,str,('SW','probecontrol','steps')),
-			self.global_voltage: 		(float,str,('SW','global','staticvoltage'))
+			self.global_voltage: 		(float,str,('SW','global','staticvoltage')),
+			self.from_Xopt: 			(float,str,('SW','scansettings','xoptfrom')),
+			self.to_Xopt: 				(float,str,('SW','scansettings','xoptto')),
+			self.from_Yopt: 			(float,str,('SW','scansettings','yoptfrom')),
+			self.to_Yopt: 				(float,str,('SW','scansettings','yoptto'))
 			}
 		self._measurementgroup = {
 			'T1':self.global_temp1,

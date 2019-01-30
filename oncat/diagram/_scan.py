@@ -1,3 +1,5 @@
+import logging
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import matplotlib.transforms as transforms
@@ -26,6 +28,10 @@ class Scan:
 		self._ax.grid(True)
 
 		self._ax_line, = self._ax.plot([self._Xopt],[self._Yopt],'rx')
+		self._scan_plot = None
+		self._scan_Xopt = None
+		self._scan_Yopt = None
+		self._scan_data = None
 
 		self._limits = limits if limits != {} else kwargs.get('limits',{})
 		self.set_limits(limits)
@@ -42,7 +48,46 @@ class Scan:
 		self._ax_line.set_xdata([self._Xopt])
 		self._ax_line.set_ydata([self._Yopt])
 		#self._canvas.draw_idle()
-		#self._canvas.flush_events()s
+		#self._canvas.flush_events()
+
+
+	def set_scan_data(self,X,Y,data):
+		'''
+		adds X,Y,data to the plot
+		'''
+		if self._scan_Xopt != X or self._scan_Yopt != Y or self._scan_data != data:
+			self._scan_Xopt = X[:]
+			self._scan_Yopt = Y[:]
+			self._scan_data = data[:]
+			try:
+				for c in self._scan_plot.collections:
+					c.remove()
+			except (AttributeError,ValueError):
+				pass
+			try:
+				#self._ax.collections = []
+				self._scan_plot = self._ax.tricontourf(self._scan_Xopt,self._scan_Yopt,self._scan_data)
+			except (ValueError,RuntimeError) as e:
+				logging.info(e)
+
+			self._generate_colorbar()
+
+
+	def _generate_colorbar(self):
+		# need to use imshow for this - tricontourf is not updateable so a colorbar loses reference to the original object
+		# (see https://stackoverflow.com/questions/40771464/how-to-check-if-colorbar-exists-on-figure/40774184#40774184)
+		#self._canvas.flush_events()
+		try:
+			#self._cax = self._colorbar.ax
+			self._colorbar.ax.cla()
+			self._colorbar = plt.colorbar(self._scan_plot,cax=self._colorbar.ax)
+		except AttributeError as e:
+			try:
+				self._colorbar = plt.colorbar(self._scan_plot)
+			except RuntimeError:
+				pass
+		self._colorbar.ax.set_ylabel('Optical power (dBm)')
+		self._fig.tight_layout()
 
 
 	def set_limits(self,limits):
@@ -100,7 +145,15 @@ def main():
 	d = Scan(limits=limits)
 	d.save('test1.png')
 	d.set_attocube_position(.100,.100)
+	d.save('test2.png')
+	d.set_scan_data([1.0,2.0,3.0,1.0,2.0,3.0,1.0,2.0,3.0],
+					[1.0,1.0,1.0,2.0,2.0,2.0,3.0,3.0,3.0],
+					[-1, 0, -1,0,1,0,-1,0,-1])
 	d.save('test3.png')
+	d.set_scan_data([2.0,3.0,4.0,2.0,3.0,4.0,2.0,3.0,4.0],
+					[2.0,2.0,2.0,3.0,3.0,3.0,4.0,4.0,4.0],
+					[-1, 0, -1,0,1,0,-1,0,-1])
+	d.save('test4.png')
 
 if __name__ == "__main__":
 	main()

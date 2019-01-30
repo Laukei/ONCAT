@@ -71,6 +71,12 @@ DEFAULT_SETTINGS = {
 		'thorlabspowermeter':{
 			'device':'FakePowerMeter',
 			'sleeptime':0.5
+		},
+		'scansettings':{
+			'xoptfrom':0.5,
+			'xoptto':4.5,
+			'yoptfrom':0.5,
+			'yoptto':4.5
 		}
 	}
 }

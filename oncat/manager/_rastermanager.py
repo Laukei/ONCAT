@@ -13,7 +13,7 @@ class RasterManager(Manager):
 		self.mover = mover
 		self._measurer_function = measurer_function
 		self.set_range(kwargs.get('range',None)) # format: (Xfrom, Xto, Yfrom, Yto)
-		self._data = []
+		self._data = {'i':[],'j':[],'Xopt':[],'Yopt':[],'meas':[]}
 		self._sleeptime = kwargs.get('sleeptime',0.1)
 		self._signal = kwargs.get('signal',None)
 		self.active = False
@@ -50,7 +50,7 @@ class RasterManager(Manager):
 
 	def _run(self):
 		self.active = True
-
+		self._data = {'i':[],'j':[],'Xopt':[],'Yopt':[],'meas':[]}
 		# home to Xfrom, Yfrom
 		self.mover.move_to('Xopt',self._range[0])
 		self.mover.move_to('Yopt',self._range[2])
@@ -72,7 +72,11 @@ class RasterManager(Manager):
 					measurement = self._measurer_function().get('opt',None)
 
 				positionX = self.mover.get_position('Xopt')
-				self._data.append([current_X_step,current_Y_step,positionX,positionY,measurement])
+				self._data['i'].append(current_X_step)
+				self._data['j'].append(current_Y_step)
+				self._data['Xopt'].append(positionX)
+				self._data['Yopt'].append(positionY)
+				self._data['meas'].append(measurement)
 				if (total_X_steps == None and positionX >= self._range[1]) or (total_X_steps != None and current_X_step >= total_X_steps):
 					break
 				else:

@@ -148,7 +148,7 @@ class FakeANC350(Mover):
 		return LIMITS
 
 	def get_position(self,channel):
-		return self._pos[self._lookup.get(channel,channel)] + ((random.random() - 0.5) * abs(2 - self._static_amp)) + (random.random()*0.01) if self._static_amp != 0 else -1
+		return self._pos[self._lookup.get(channel,channel)] + ((random.random() - 0.5) * abs(2 - self._static_amp)) + (random.random()*0.0001) if self._static_amp != 0 else -1
 
 	def move_up(self,channel):
 		self._move(channel,1)
