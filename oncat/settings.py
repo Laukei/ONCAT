@@ -24,6 +24,9 @@ DEFAULT_SETTINGS = {
 		},
 		'FakePowerMeter':{
 		},
+		'Model336': {
+			'address':'ASRL3'
+		},
 		'CTC100':{
 			'address':'ASRL6'
 		}
@@ -67,7 +70,7 @@ DEFAULT_SETTINGS = {
 			'labels':['T1','T2','T3','T4']
 		},
 		'lakeshore':{
-			'device':'FakeThermometer',
+			'device':'Model336',
 			'sleeptime':0.5,
 			'labels':['T5','T6','T7','T8']
 		},
