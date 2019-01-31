@@ -1,17 +1,22 @@
 import sys
 import copy
+import logging
 
 from PyQt5 import QtGui, QtCore, QtWidgets #QtWebEngineWidgets
 from PyQt5.uic import loadUi
 from pyjanssen.janssen_mcm import CacliError
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 from .settings import Settings
 from .settingsgui import SettingsDialog
-from .diagram import Diagram
+from .diagram import Diagram, Scan
 from .monitor import launch_monitor_as_thread, MoverPositionMonitor, BaseMonitor
 from .movement import movement_lookup
 from .measurement import measurement_lookup
+from .manager import RasterManager
 
+logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class MainWindow(QtWidgets.QMainWindow):
 	def __init__(self):
@@ -21,6 +26,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.setWindowTitle(self.name_of_application)
 
 		self._devices = {}
+		self._managers = {}
 		self._threads = {}
 		self._currently_moving = []
 
@@ -31,6 +37,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.add_stretches()
 
 		self.instantiate_hardware()
+		self.instantiate_managers()
 		self.generate_helpers()
 		self.connect_interface()
 		self.add_validators()
@@ -43,6 +50,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
 		self.final_setup()
 		self.show()
+
+
+	def instantiate_managers(self):
+		self._managers['rastermanager'] = RasterManager(self._devices['shortrangemover'],self._devices['thorlabspowermeter'].get,
+				signal=self.scanFinished)
 
 
 	def connect_menubar(self):
@@ -68,7 +80,11 @@ class MainWindow(QtWidgets.QMainWindow):
 			self.probe_power: 			(int,str,('SW','probecontrol','power')),
 			self.probe_power_slider: 	(int,int,('SW','probecontrol','power')),
 			self.probe_steps: 			(int,str,('SW','probecontrol','steps')),
-			self.global_voltage: 		(float,str,('SW','global','staticvoltage'))
+			self.global_voltage: 		(float,str,('SW','global','staticvoltage')),
+			self.from_Xopt: 			(float,str,('SW','scansettings','xoptfrom')),
+			self.to_Xopt: 				(float,str,('SW','scansettings','xoptto')),
+			self.from_Yopt: 			(float,str,('SW','scansettings','yoptfrom')),
+			self.to_Yopt: 				(float,str,('SW','scansettings','yoptto'))
 			}
 		self._measurementgroup = {
 			'T1':self.global_temp1,
@@ -88,8 +104,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	def final_setup(self):
+		self._going_to = {'Xopt':False, 'Yopt':False}
 		self.on_zlock_change(self._settings.get('SW','zcontrol','lockstate'))
 		self.on_probe_temp_auto(self.probe_temp_auto.checkState())
+		self.set_current_diagram(0)
+		self.graphsTabWidget.currentChanged.connect(self.set_current_diagram)
+
+
+	@QtCore.pyqtSlot(int)
+	def set_current_diagram(self,index_):
+		self._active_diagram = self._diagrams[index_]
+		self.canvas = self._canvases[index_]
+		self.fig = self._figs[index_]
 
 
 	def set_lock(self,state=True,controlset=None):
@@ -151,7 +177,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		elif identifier == 'shortrangemover':
 			self._spin_mover('shortrangemover',staticvoltage=self._settings.get('SW','global','staticvoltage'))
 		elif identifier in ('ctc100','lakeshore','thorlabspowermeter'):
-			self._spin_measurer(identifier)
+			self._spin_measurer(identifier,mover=self._devices['shortrangemover'])
 		else:
 			raise ValueError
 
@@ -188,11 +214,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	def add_diagrams(self):
-		self._diagram = Diagram(limits=self._settings.get('SW','shortrangemover','limits'))
-		self.canvas = self._diagram.canvas()
-		self.fig = self._diagram.fig()
-		self.graphsTabWidget.addTab(self.canvas,'Diagram')
-		self.canvas.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding))
+		self._canvases = []
+		self._figs = []
+		self._diagrams = []
+		for diagram, name in ((Diagram,'Diagram'), (Scan,'Scan')):
+			self._diagrams.append(diagram(limits=self._settings.get('SW','shortrangemover','limits')))
+			self._canvases.append(self._diagrams[-1].canvas())
+			self._figs.append(self._diagrams[-1].fig())
+			widget = QtWidgets.QWidget()
+			layout = QtWidgets.QVBoxLayout()
+			layout.addWidget(self._canvases[-1])
+			layout.addWidget(NavigationToolbar(self._canvases[-1],self))
+			widget.setLayout(layout)
+			self.graphsTabWidget.addTab(widget, name)
+			self._canvases[-1].setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding))
+			self._figs[-1].tight_layout()
+			self._canvases[-1].draw_idle()
 
 
 	def connect_timers(self):
@@ -216,6 +253,9 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.probe_power.textEdited.connect(self.on_probecontrol_powerchange)
 		self.probe_power_slider.valueChanged.connect(self.on_probecontrol_powerchange)
 		self.z_lock.stateChanged.connect(self.on_zlock_change)
+		self.button_goto.clicked.connect(self.on_goto_clicked)
+		self.button_scan.clicked.connect(self.on_scan_clicked)
+		self.scanFinished.connect(self.on_scan_finished)
 
 		for button in self.probe_buttongroup:
 			button.pressed.connect(self.on_longrangemover_pressed)
@@ -303,7 +343,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	def _add_validator(self,movertype,name,settingsgroup):
-		#print(movertype,name,self._devices[movertype].get_limits()[name])
 		limits = self._devices[movertype].get_limits()
 		if limits[name][0] == int:
 			validator = QtGui.QIntValidator(limits[name][1],limits[name][2])
@@ -344,6 +383,60 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	@QtCore.pyqtSlot()
+	def on_goto_clicked(self):
+		was_moving = False
+		for channel, moving in self._going_to.items():
+			if moving:
+				was_moving = True
+				self._devices['shortrangemover'].stop(channel)
+				self._going_to[channel] = False
+		if was_moving:
+			self.button_goto.setText('Go')
+		else:
+			target = {}
+			try:
+				target['Xopt'] = float(self.target_Xopt.text())
+			except ValueError:
+				pass
+			try:
+				target['Yopt'] = float(self.target_Yopt.text())
+			except ValueError:
+				pass
+
+			bundle = self._make_bundle(self.vgroove_settingsgroup)
+			self._devices['shortrangemover'].set_settings(bundle)
+			for channel, pos in target.items():
+				self._devices['shortrangemover'].move_to(channel,pos)
+				self._going_to[channel] = True
+			if len(target) > 0:
+				self.button_goto.setText('Stop')
+
+
+	@QtCore.pyqtSlot()
+	def on_scan_clicked(self):
+		manager = self._managers['rastermanager']
+		if manager.active:
+			manager.stop()
+			self.button_scan.setText('Scan')
+		else:
+			range_ = []
+			for widget in (self.from_Xopt, self.to_Xopt, self.from_Yopt, self.to_Yopt):
+				try:
+					range_.append(float(widget.text()))
+				except:
+					logger.error('Tried to run scan without setting value for {}'.format(widget))
+			manager.set_range(range_)
+			bundle = self._make_bundle(self.vgroove_settingsgroup)
+			manager.mover.set_settings(bundle)
+
+			try:
+				manager.run()
+				self.button_scan.setText('Stop')
+			except (AssertionError,ValueError) as e:
+				logger.error('Failed to run manager: {}'.format(e))
+
+
+	@QtCore.pyqtSlot()
 	def on_longrangemover_pressed(self):
 		self._set_device_settings()
 		self._longrangemove()
@@ -371,7 +464,7 @@ class MainWindow(QtWidgets.QMainWindow):
 					try:
 						func(param)
 					except (IndexError,CacliError) as e:
-						print('error moving: {}'.format(e))
+						logger.error('error moving: {}'.format(e))
 
 
 	@QtCore.pyqtSlot()
@@ -427,12 +520,19 @@ class MainWindow(QtWidgets.QMainWindow):
 	@QtCore.pyqtSlot()
 	def _update_graphs(self):
 		try:
-			self._diagram.set_attocube_position(float(self.Xopt_value.text()),float(self.Yopt_value.text()))
+			self._active_diagram.set_attocube_position(float(self.Xopt_value.text()),float(self.Yopt_value.text()))
 		except ValueError:
 			pass
 		try:
-			self._diagram.set_janssen_position(int(self.X_value.text()),int(self.Y_value.text()))
-		except ValueError:
+			self._active_diagram.set_janssen_position(int(self.X_value.text()),int(self.Y_value.text()))
+		except (ValueError,AttributeError):
+			pass
+		try:
+			rasterdata = self._managers['rastermanager'].get_data()
+			self._active_diagram.set_scan_data(rasterdata['Xopt'],rasterdata['Yopt'],rasterdata['meas'])
+		except ValueError as e:
+			print(e)
+		except AttributeError: 
 			pass
 		self.canvas.draw_idle()
 
@@ -444,6 +544,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
 	updateMeasurement = QtCore.pyqtSignal(dict)
 	updatePositions = QtCore.pyqtSignal(dict)
+	scanFinished = QtCore.pyqtSignal()
+
+
+	@QtCore.pyqtSlot()
+	def on_scan_finished(self):
+		self.button_scan.setText('Scan')
 
 
 	@QtCore.pyqtSlot(dict)
