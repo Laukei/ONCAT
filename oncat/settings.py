@@ -23,6 +23,9 @@ DEFAULT_SETTINGS = {
 		'FakeThermometer':{
 		},
 		'FakePowerMeter':{
+		},
+		'CTC100':{
+			'address':'ASRL6'
 		}
 	},
 	'SW':{ # software defaults
