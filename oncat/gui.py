@@ -53,7 +53,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	def instantiate_managers(self):
-		self._managers['rastermanager'] = RasterManager(self._devices['shortrangemover'],self._devices['thorlabspowermeter'].get,
+		self._managers['rastermanager'] = RasterManager(self._devices['shortrangemover'],self._devices['powermeter'].get,
 				signal=self.scanFinished)
 
 
@@ -167,7 +167,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 	def instantiate_hardware(self):
-		for monitor in ('longrangemover','shortrangemover','ctc100','lakeshore','thorlabspowermeter'):
+		for monitor in ('longrangemover','shortrangemover','thermometer1','thermometer2','powermeter'):
 			self._instantiate_hardware(monitor)
 
 
@@ -176,7 +176,7 @@ class MainWindow(QtWidgets.QMainWindow):
 			self._spin_mover('longrangemover')
 		elif identifier == 'shortrangemover':
 			self._spin_mover('shortrangemover',staticvoltage=self._settings.get('SW','global','staticvoltage'))
-		elif identifier in ('ctc100','lakeshore','thorlabspowermeter'):
+		elif identifier in ('thermometer1','thermometer2','powermeter'):
 			self._spin_measurer(identifier,mover=self._devices['shortrangemover'])
 		else:
 			raise ValueError

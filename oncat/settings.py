@@ -24,6 +24,13 @@ DEFAULT_SETTINGS = {
 		},
 		'FakePowerMeter':{
 		},
+		'ThorlabsPM100USB':{
+			'address':'USBInstrument1',
+			'wavelength':1550, #nm
+			'attenuation':0, #dB
+			'averages':1, #number of averages (3ms/meas)
+			'unit':'DBM' #can be DBM or W
+		},
 		'Model336': {
 			'address':'ASRL3'
 		},
@@ -64,19 +71,19 @@ DEFAULT_SETTINGS = {
 			'triggerbackedoffmessage':False,
 			'graphupdaterate':250 # ms
 		},
-		'ctc100':{
+		'thermometer1':{
 			'device':'FakeThermometer',
 			'sleeptime':0.5,
 			'labels':['T1','T2','T3','T4']
 		},
-		'lakeshore':{
-			'device':'Model336',
+		'thermometer2':{
+			'device':'FakeThermometer',
 			'sleeptime':0.5,
 			'labels':['T5','T6','T7','T8']
 		},
-		'thorlabspowermeter':{
-			'device':'FakePowerMeter',
-			'sleeptime':0.5
+		'powermeter':{
+			'device':'ThorlabsPM100USB',
+			'sleeptime':0.05
 		},
 		'scansettings':{
 			'xoptfrom':0.5,
