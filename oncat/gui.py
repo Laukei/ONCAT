@@ -394,6 +394,7 @@ class MainWindow(QtWidgets.QMainWindow):
 				self._going_to[channel] = False
 		if was_moving:
 			self.button_goto.setText('Go')
+			self.enable_other_tabs(True)
 		else:
 			target = {}
 			try:
@@ -412,6 +413,7 @@ class MainWindow(QtWidgets.QMainWindow):
 				self._going_to[channel] = True
 			if len(target) > 0:
 				self.button_goto.setText('Stop')
+				self.enable_other_tabs(False)
 
 
 	@QtCore.pyqtSlot()
@@ -432,9 +434,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
 			try:
 				manager.run()
+				self.enable_other_tabs(False)
 				self.button_scan.setText('Stop')
 			except (AssertionError,ValueError) as e:
 				logger.error('Failed to run manager: {}'.format(e))
+
+
+	def enable_other_tabs(self,enable):
+		idx = self.tabWidget.currentIndex()
+		for i in range(self.tabWidget.count()):
+			if i != idx:
+				self.tabWidget.setTabEnabled(i,enable)
 
 
 	@QtCore.pyqtSlot()
@@ -442,12 +452,14 @@ class MainWindow(QtWidgets.QMainWindow):
 		manager = self._managers['holdmanager']
 		if manager.active:
 			manager.stop()
+			self.enable_other_tabs(True)
 			self.button_hold.setText('Hold')
 		else:
 			bundle = self._make_bundle(self.vgroove_settingsgroup)
 			manager.mover.set_settings(bundle)
 			try:
 				manager.run()
+				self.enable_other_tabs(False)
 				self.button_hold.setText('Stop')
 			except (AssertionError,ValueError) as e:
 				logger.error('Failed to run manager: {}'.format(e))
@@ -568,6 +580,7 @@ class MainWindow(QtWidgets.QMainWindow):
 	def on_scan_finished(self):
 		self._managers['rastermanager'].stop()
 		self.button_scan.setText('Scan')
+		self.enable_other_tabs(True)
 
 
 	@QtCore.pyqtSlot(dict)
