@@ -8,6 +8,7 @@ class Manager:
 
 	def stop(self):
 		self._stop = True
+		self.active = False
 
 
 	def check_for_end(self):

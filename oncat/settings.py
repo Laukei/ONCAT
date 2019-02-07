@@ -82,7 +82,7 @@ DEFAULT_SETTINGS = {
 			'labels':['T5','T6','T7','T8']
 		},
 		'powermeter':{
-			'device':'ThorlabsPM100USB',
+			'device':'FakePowerMeter',
 			'sleeptime':0.05
 		},
 		'scansettings':{

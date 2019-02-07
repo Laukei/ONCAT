@@ -50,6 +50,7 @@ class RasterManager(Manager):
 
 	def _run(self):
 		self.active = True
+		self._stop = False
 		self._data = {'i':[],'j':[],'Xopt':[],'Yopt':[],'meas':[]}
 		# home to Xfrom, Yfrom
 		self.mover.move_to('Xopt',self._range[0])

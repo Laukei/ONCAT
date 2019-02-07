@@ -195,7 +195,7 @@ class FakeANC350(Mover):
 			while self.kill_thread != True:
 				i+=1
 				self._move(channel,direction)
-				time.sleep(0.05)
+				time.sleep(1/self._freq[self._lookup.get(channel,channel)])
 		self.movingthread = threading.Thread(target=move_axis)
 		self.movingthread.setDaemon(True)
 		self.movingthread.start()
@@ -204,7 +204,7 @@ class FakeANC350(Mover):
 		axis = self._lookup.get(channel,channel)
 		pos = self.get_position(axis)
 		if (pos >= self._limits[axis][0] or direction == 1) and (pos <= self._limits[axis][1] or direction == -1):
-			self._pos[axis] += direction*(self._freq[axis] * self._volt[axis] * self._step[axis]) * (1e-7)
+			self._pos[axis] += direction*(self._volt[axis] * self._step[axis]) * (1e-6)
 
 
 	def _stopMoving(self,channel):

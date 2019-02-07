@@ -13,7 +13,7 @@ from .diagram import Diagram, Scan
 from .monitor import launch_monitor_as_thread, MoverPositionMonitor, BaseMonitor
 from .movement import movement_lookup
 from .measurement import measurement_lookup
-from .manager import RasterManager
+from .manager import RasterManager, HoldManager
 
 logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,6 +55,7 @@ class MainWindow(QtWidgets.QMainWindow):
 	def instantiate_managers(self):
 		self._managers['rastermanager'] = RasterManager(self._devices['shortrangemover'],self._devices['powermeter'].get,
 				signal=self.scanFinished)
+		self._managers['holdmanager'] = HoldManager(self._devices['shortrangemover'],self._devices['powermeter'].get)
 
 
 	def connect_menubar(self):
@@ -255,6 +256,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.z_lock.stateChanged.connect(self.on_zlock_change)
 		self.button_goto.clicked.connect(self.on_goto_clicked)
 		self.button_scan.clicked.connect(self.on_scan_clicked)
+		self.button_hold.clicked.connect(self.on_hold_clicked)
 		self.scanFinished.connect(self.on_scan_finished)
 
 		for button in self.probe_buttongroup:
@@ -416,8 +418,7 @@ class MainWindow(QtWidgets.QMainWindow):
 	def on_scan_clicked(self):
 		manager = self._managers['rastermanager']
 		if manager.active:
-			manager.stop()
-			self.button_scan.setText('Scan')
+			self.on_scan_finished()
 		else:
 			range_ = []
 			for widget in (self.from_Xopt, self.to_Xopt, self.from_Yopt, self.to_Yopt):
@@ -432,6 +433,22 @@ class MainWindow(QtWidgets.QMainWindow):
 			try:
 				manager.run()
 				self.button_scan.setText('Stop')
+			except (AssertionError,ValueError) as e:
+				logger.error('Failed to run manager: {}'.format(e))
+
+
+	@QtCore.pyqtSlot()
+	def on_hold_clicked(self):
+		manager = self._managers['holdmanager']
+		if manager.active:
+			manager.stop()
+			self.button_hold.setText('Hold')
+		else:
+			bundle = self._make_bundle(self.vgroove_settingsgroup)
+			manager.mover.set_settings(bundle)
+			try:
+				manager.run()
+				self.button_hold.setText('Stop')
 			except (AssertionError,ValueError) as e:
 				logger.error('Failed to run manager: {}'.format(e))
 
@@ -549,6 +566,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 	@QtCore.pyqtSlot()
 	def on_scan_finished(self):
+		self._managers['rastermanager'].stop()
 		self.button_scan.setText('Scan')
 
 
