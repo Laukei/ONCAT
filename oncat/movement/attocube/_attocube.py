@@ -69,7 +69,8 @@ class ANC350(Mover):
 	def move_to(self,channel,pos):
 		target = int(pos*1000000)
 		if self.can_move(channel,target=target):
-			self._p.moveReference(self.lookup(channel),target)
+			self._p.moveAbsolute(self.lookup(channel),target)
+			print('moving!')
 
 	def set_limits(self,limits):
 		self._limits = self._range
@@ -87,12 +88,13 @@ class ANC350(Mover):
 
 	def stop(self,channel):
 		self._p.stopApproach(self.lookup(channel))
+		print('stopped')
 
 	def can_move(self,channel,**kwargs):
 		axis = self.lookup(channel)
 		pos = self._last_positions[axis]
 		direction = kwargs.get('direction',None)
-		target = kwargs.get('target',None)
+		target = kwargs.get('target',None) / 1000000.0
 		if self._static_amp == 0:
 			return False
 		elif direction != None and ((pos >= self._limits[axis][0] or direction == 0) and (pos <= self._limits[axis][1] or direction == 1)):
