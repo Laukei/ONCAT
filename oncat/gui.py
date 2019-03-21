@@ -258,6 +258,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.button_scan.clicked.connect(self.on_scan_clicked)
 		self.button_hold.clicked.connect(self.on_hold_clicked)
 		self.scanFinished.connect(self.on_scan_finished)
+		self.gotoFinished.connect(self._goto_reset)
 
 		for button in self.probe_buttongroup:
 			button.pressed.connect(self.on_longrangemover_pressed)
@@ -384,6 +385,20 @@ class MainWindow(QtWidgets.QMainWindow):
 		return bundle
 
 
+	gotoFinished = QtCore.pyqtSignal(str)
+
+	@QtCore.pyqtSlot(str)
+	def _goto_reset(self,stopped_channel):
+		self._going_to[stopped_channel] = False
+		is_moving = False
+		for channel, moving in self._going_to.items():
+			if moving:
+				is_moving = True
+		if not is_moving:
+			self.button_goto.setText('Go')
+			self.enable_other_tabs(True)
+
+
 	@QtCore.pyqtSlot()
 	def on_goto_clicked(self):
 		was_moving = False
@@ -409,7 +424,7 @@ class MainWindow(QtWidgets.QMainWindow):
 			bundle = self._make_bundle(self.vgroove_settingsgroup)
 			self._devices['shortrangemover'].set_settings(bundle)
 			for channel, pos in target.items():
-				self._devices['shortrangemover'].move_to(channel,pos)
+				self._devices['shortrangemover'].move_to(channel,pos,signal=self.gotoFinished)
 				self._going_to[channel] = True
 			if len(target) > 0:
 				self.button_goto.setText('Stop')
@@ -560,7 +575,7 @@ class MainWindow(QtWidgets.QMainWindow):
 			rasterdata = self._managers['rastermanager'].get_data()
 			self._active_diagram.set_scan_data(rasterdata['Xopt'],rasterdata['Yopt'],rasterdata['meas'])
 		except ValueError as e:
-			print(e)
+			logger.info(e)
 		except AttributeError: 
 			pass
 		self.canvas.draw_idle()

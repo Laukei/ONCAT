@@ -53,8 +53,8 @@ class RasterManager(Manager):
 		self._stop = False
 		self._data = {'i':[],'j':[],'Xopt':[],'Yopt':[],'meas':[]}
 		# home to Xfrom, Yfrom
-		self.mover.move_to('Xopt',self._range[0])
-		self.mover.move_to('Yopt',self._range[2])
+		self.mover.move_to('Xopt',self._range[0],hold=True)
+		self.mover.move_to('Yopt',self._range[2],hold=True)
 		positionX = self.mover.get_position('Xopt')
 		positionY = self.mover.get_position('Yopt')
 		# measure, move
@@ -83,7 +83,7 @@ class RasterManager(Manager):
 				else:
 					self.mover.move_up('Xopt')
 					current_X_step += 1
-			self.mover.move_to('Xopt',self._range[0])
+			self.mover.move_to('Xopt',self._range[0],hold=True)
 			if positionY >= self._range[3]:
 				break
 			else:

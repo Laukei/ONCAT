@@ -18,7 +18,9 @@ class ANC350(Mover):
 	def __init__(self,**kwargs):
 		self._p = Positioner()
 		self._last_positions = {0:None,1:None,2:None}
+		self.kill_thread = {0:False,1:False,2:False}
 		self._lookup = kwargs.get('lookup',{})
+		self._homing_accuracy = kwargs.get('homing_accuracy',{})
 		self._range = {0:[0,5],1:[0,5],2:[0,5]}
 		self.set_limits(kwargs.get('limits',{}))
 		self._static_amp = kwargs.get('staticvoltage',0)
@@ -66,11 +68,48 @@ class ANC350(Mover):
 		if self.can_move(channel,direction=0):
 			self._p.moveSingleStep(self.lookup(channel),1)
 
-	def move_to(self,channel,pos):
+	def move_to(self,channel,pos,**kwargs):
+		'''
+		call me to move_to a location
+		'''
 		target = int(pos*1000000)
+		signal = kwargs.get('signal',None)
+		hold = kwargs.get('hold',False)
 		if self.can_move(channel,target=target):
+			#self._p.moveAbsolute(self.lookup(channel),target)
+			self._move_to(channel,target,signal)
+			if hold:
+				while True:
+					if self.kill_thread[self.lookup(channel)] == True:
+						break
+					else:
+						time.sleep(0.05)
+
+	def _move_to(self,channel,target,signal):
+		'''
+		move_to checks to see if can move; _move_to spins a thread to continually check on position and stop movement
+		'''
+		self.kill_thread[self.lookup(channel)] = False
+		def __move_to():
+			'''
+			this function is spun out as a thread in self.movingthread
+			'''
+			i = 0
+			target_mm = target / 1000000.0
 			self._p.moveAbsolute(self.lookup(channel),target)
-			print('moving!')
+			while self.kill_thread[self.lookup(channel)] != True:
+				i+=1
+				if abs(self.get_position(channel) - target_mm) <= self._homing_accuracy.get(channel,10e-6) and self._p.getStatus(self.lookup(channel)) != 0:
+					self.stop(channel)
+					if signal:
+						signal.emit(channel)
+					continue
+				else:
+					time.sleep(1)
+
+		self.movingthread = threading.Thread(target=__move_to)
+		self.movingthread.setDaemon(True)
+		self.movingthread.start()
 
 	def set_limits(self,limits):
 		self._limits = self._range
@@ -87,8 +126,8 @@ class ANC350(Mover):
 			self._p.moveContinuous(self.lookup(channel),1)
 
 	def stop(self,channel):
+		self.kill_thread[self.lookup(channel)] = True
 		self._p.stopApproach(self.lookup(channel))
-		print('stopped')
 
 	def can_move(self,channel,**kwargs):
 		axis = self.lookup(channel)
