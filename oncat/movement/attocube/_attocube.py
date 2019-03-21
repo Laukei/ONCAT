@@ -94,7 +94,9 @@ class ANC350(Mover):
 		axis = self.lookup(channel)
 		pos = self._last_positions[axis]
 		direction = kwargs.get('direction',None)
-		target = kwargs.get('target',None) / 1000000.0
+		target = kwargs.get('target',None)
+		if target is not None:
+			target = target / 1000000.0
 		if self._static_amp == 0:
 			return False
 		elif direction != None and ((pos >= self._limits[axis][0] or direction == 0) and (pos <= self._limits[axis][1] or direction == 1)):
