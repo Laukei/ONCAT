@@ -28,6 +28,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self._devices = {}
 		self._managers = {}
 		self._threads = {}
+		self._thread_pause_flags = {}
 		self._currently_moving = []
 
 		self._settings = Settings()
@@ -189,10 +190,12 @@ class MainWindow(QtWidgets.QMainWindow):
 									**self._settings.get('HW',selected_class),
 									**self._settings.get('SW',identifier),
 									**kwargs)
+		self._thread_pause_flags[identifier] = {'pause':False}
 		self._threads[identifier] = launch_monitor_as_thread(self._devices[identifier],
 															 self._settings.get('HW',selected_class,'lookup'),
 															 monitor=MoverPositionMonitor,
 															 signal=self.updatePositions,
+															 pause_flag = self._thread_pause_flags[identifier],
 															 sleeptime=self._settings.get('SW',identifier,'sleeptime'))
 
 
@@ -202,9 +205,11 @@ class MainWindow(QtWidgets.QMainWindow):
 									**self._settings.get('HW',selected_class),
 									**self._settings.get('SW',identifier),
 									**kwargs)
+		self._thread_pause_flags[identifier] = {'pause':False}
 		self._threads[identifier] = launch_monitor_as_thread(monitor=BaseMonitor,
 															 function=self._devices[identifier].get,
 															 signal=self.updateMeasurement,
+															 pause_flag = self._thread_pause_flags[identifier],
 															 sleeptime=self._settings.get('SW',identifier,'sleeptime'))
 
 
@@ -448,6 +453,7 @@ class MainWindow(QtWidgets.QMainWindow):
 			manager.mover.set_settings(bundle)
 
 			try:
+				self._thread_pause_flags['powermeter']['pause'] = True
 				manager.run()
 				self.enable_other_tabs(False)
 				self.button_scan.setText('Stop')
@@ -595,6 +601,7 @@ class MainWindow(QtWidgets.QMainWindow):
 	def on_scan_finished(self):
 		self._managers['rastermanager'].stop()
 		self.button_scan.setText('Scan')
+		self._thread_pause_flags['powermeter']['pause'] = False
 		self.enable_other_tabs(True)
 
 
