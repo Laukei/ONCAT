@@ -43,9 +43,9 @@ class ANC350(Mover):
 			}
 		}
 		self._function_lookup = {
-			'frequency':self._p.frequency,
-			'voltage':self._p.amplitude,
-			'step':self._p.stepCount
+			'frequency':[self._p.frequency,1],
+			'voltage':[self._p.amplitude,1000],
+			'step':[self._p.stepCount,1]
 		}
 
 	@staticmethod
@@ -160,7 +160,7 @@ class ANC350(Mover):
 
 	def _setter(self,name,channel,value):
 		if self._settings[channel][name] != value:
-			self._function_lookup[name](self.lookup(channel),int(value*1000))
+			self._function_lookup[name][0](self.lookup(channel),int(value)*self._function_lookup[name][1])
 			self._settings[channel][name] = value
 
 	def set_settings(self,bundle):
