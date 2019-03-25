@@ -1,4 +1,5 @@
 import logging
+import time
 
 import pyvisa
 
@@ -11,6 +12,7 @@ class ThorlabsPM100USB(PowerMeter):
 		super().__init__()
 		rm = pyvisa.ResourceManager()
 		self._device = rm.open_resource(kwargs.get('address'))
+		self._device.timeout = 1000
 		self._device.read_termination = '\n'
 		self._wavelength = kwargs.get('wavelength',1550)
 		self._attenuation = kwargs.get('attenuation',0)
@@ -31,4 +33,12 @@ class ThorlabsPM100USB(PowerMeter):
 
 
 	def get(self):
-		return {'opt':float(self._device.query('MEAS:POW?'))}
+		try:
+			value = float(self._device.query('MEAS:POW?'))
+		except pyvisa.errors.VisaIOError as e:
+			time.sleep(1)
+			self.set_defaults()
+			value = float(self._device.query('MEAS:POW?'))
+		if value > 1e20:
+			value = -100
+		return {'opt':value}

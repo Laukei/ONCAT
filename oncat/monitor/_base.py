@@ -15,6 +15,8 @@ class BaseMonitor:
 		self._params = kwargs.get('parameters',{})
 		self._st = kwargs.get('sleeptime',1)
 		self._sig = kwargs.get('signal')
+		self._pause_flag = kwargs.get('pause_flag',{'pause':False})
+
 
 	def run(self):
 		'''
@@ -22,8 +24,9 @@ class BaseMonitor:
 		returns via _output
 		'''
 		while True:
-			response = self._function()
-			self._output(response)
+			if not self._pause_flag['pause']:
+				response = self._function()
+				self._output(response)
 			time.sleep(self._st)
 
 	def _function(self):
