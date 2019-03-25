@@ -86,10 +86,13 @@ DEFAULT_SETTINGS = {
 			'sleeptime':0.05
 		},
 		'scansettings':{
-			'xoptfrom':0.5,
-			'xoptto':4.5,
-			'yoptfrom':0.5,
-			'yoptto':4.5
+			'xoptfrom':2.4,
+			'xoptto':2.6,
+			'yoptfrom':2.4,
+			'yoptto':2.6
+		},
+		'holdmanager':{
+			'sleeptime':0.1 #between moves
 		}
 	}
 }
