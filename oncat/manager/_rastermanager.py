@@ -1,5 +1,7 @@
 import time
 import threading
+import csv
+import os
 
 from ._base import Manager
 
@@ -61,34 +63,49 @@ class RasterManager(Manager):
 		total_X_steps = None
 		current_X_step = 0
 		current_Y_step = 0
+		measurement_time = int(time.time())
+		self._data_buffer = []
+
+		def _write_buffer():
+			os.makedirs('measurements', exist_ok=True)
+			with open('measurements\\measurement_{}.txt'.format(measurement_time),'a',newline='\n') as f:
+				writer = csv.writer(f,delimiter='\t')
+				writer.writerows(self._data_buffer)
+				self._data_buffer = []
+
 		while True:
-			positionY = self.mover.get_position('Yopt')
 			current_X_step = 0
 			while True:
 				time.sleep(self._sleeptime)
 				if self.check_for_end() == True:
 					self.active = False
+					_write_buffer()
 					return
 				else:
 					measurement = self._measurer_function().get('opt',None)
 
 				positionX = self.mover.get_position('Xopt')
+				positionY = self.mover.get_position('Yopt')
 				self._data['i'].append(current_X_step)
 				self._data['j'].append(current_Y_step)
 				self._data['Xopt'].append(positionX)
 				self._data['Yopt'].append(positionY)
 				self._data['meas'].append(measurement)
+				self._data_buffer.append([current_X_step,current_Y_step,positionX,positionY,measurement])
 				if (total_X_steps == None and positionX >= self._range[1]) or (total_X_steps != None and current_X_step >= total_X_steps):
 					break
 				else:
 					self.mover.move_up('Xopt')
 					current_X_step += 1
 			self.mover.move_to('Xopt',self._range[0],hold=True)
+			_write_buffer()
 			if positionY >= self._range[3]:
 				break
 			else:
 				self.mover.move_up('Yopt')
 				current_Y_step += 1 
+				time.sleep(0.1)
+
 		self.active = False
 		if self._signal:
 			self._signal.emit()
