@@ -199,7 +199,7 @@ class FakeANC350(Mover):
 	def move_down(self,channel):
 		self._move(channel,-1)
 
-	def move_to(self,channel,pos):
+	def move_to(self,channel,pos,**kwargs):
 		self._pos[self._lookup.get(channel,channel)] = pos
 
 	def set_limits(self,limits):
