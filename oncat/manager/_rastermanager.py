@@ -18,6 +18,7 @@ class RasterManager(Manager):
 		self._data = {'i':[],'j':[],'Xopt':[],'Yopt':[],'meas':[]}
 		self._sleeptime = kwargs.get('sleeptime',0.1)
 		self._signal = kwargs.get('signal',None)
+		self._autosavedirectory = kwargs.get('autosavedirectory','measurements')
 		self.active = False
 
 
@@ -67,8 +68,8 @@ class RasterManager(Manager):
 		self._data_buffer = []
 
 		def _write_buffer():
-			os.makedirs('measurements', exist_ok=True)
-			with open('measurements\\measurement_{}.txt'.format(measurement_time),'a',newline='\n') as f:
+			os.makedirs(self._autosavedirectory, exist_ok=True)
+			with open(os.path.join(self._autosavedirectory,'measurement_{}.txt'.format(measurement_time)),'a',newline='\n') as f:
 				writer = csv.writer(f,delimiter='\t')
 				writer.writerows(self._data_buffer)
 				self._data_buffer = []

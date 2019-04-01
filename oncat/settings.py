@@ -70,7 +70,8 @@ DEFAULT_SETTINGS = {
 			'staticvoltage':0, #start with 0 voltage to prevent heating on startup
 			'probeautotempsensor':'T1',
 			'triggerbackedoffmessage':False,
-			'graphupdaterate':250 # ms
+			'graphupdaterate':250, # ms
+			'autosavedirectory':'measurements'
 		},
 		'thermometer1':{
 			'device':'FakeThermometer',
