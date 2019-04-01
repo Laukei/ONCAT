@@ -55,7 +55,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
 	def instantiate_managers(self):
 		self._managers['rastermanager'] = RasterManager(self._devices['shortrangemover'],self._devices['powermeter'].get,
-				signal=self.scanFinished,autosavedirectory=self._settings.get('SW','global','autosavedirectory'))
+				signal=self.scanFinished,autosavedirectory=self._settings.get('SW','global','autosavedirectory'),
+				measurement_signal=self.updateMeasurement)
 		self._managers['holdmanager'] = HoldManager(self._devices['shortrangemover'],self._devices['powermeter'].get)
 
 

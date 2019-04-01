@@ -18,6 +18,7 @@ class RasterManager(Manager):
 		self._data = {'i':[],'j':[],'Xopt':[],'Yopt':[],'meas':[]}
 		self._sleeptime = kwargs.get('sleeptime',0.1)
 		self._signal = kwargs.get('signal',None)
+		self._measurement_signal = kwargs.get('measurement_signal',None)
 		self._autosavedirectory = kwargs.get('autosavedirectory','measurements')
 		self.active = False
 
@@ -83,7 +84,10 @@ class RasterManager(Manager):
 					_write_buffer()
 					return
 				else:
-					measurement = self._measurer_function().get('opt',None)
+					measurement = self._measurer_function()
+					if self._measurement_signal:
+						self._measurement_signal.emit(measurement)
+					measurement = measurement.get('opt',None)
 
 				positionX = self.mover.get_position('Xopt')
 				positionY = self.mover.get_position('Yopt')
