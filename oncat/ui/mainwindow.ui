@@ -1090,7 +1090,7 @@
             </rect>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>2</number>
            </property>
            <widget class="QWidget" name="tab">
             <attribute name="title">
@@ -1321,7 +1321,7 @@
             <widget class="QPushButton" name="button_scan">
              <property name="geometry">
               <rect>
-               <x>140</x>
+               <x>100</x>
                <y>90</y>
                <width>61</width>
                <height>28</height>
@@ -1329,6 +1329,19 @@
              </property>
              <property name="text">
               <string>Scan</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="button_scan_reset">
+             <property name="geometry">
+              <rect>
+               <x>170</x>
+               <y>90</y>
+               <width>81</width>
+               <height>28</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Reset graph</string>
              </property>
             </widget>
            </widget>

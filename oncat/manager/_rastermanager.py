@@ -52,10 +52,14 @@ class RasterManager(Manager):
 		self.movingthread.start()
 
 
+	def reset_data(self):
+		self._data = {'i':[],'j':[],'Xopt':[],'Yopt':[],'meas':[]}
+
+
 	def _run(self):
 		self.active = True
 		self._stop = False
-		self._data = {'i':[],'j':[],'Xopt':[],'Yopt':[],'meas':[]}
+		#self._data = {'i':[],'j':[],'Xopt':[],'Yopt':[],'meas':[]}
 		# home to Xfrom, Yfrom
 		self.mover.move_to('Xopt',self._range[0],hold=True)
 		self.mover.move_to('Yopt',self._range[2],hold=True)

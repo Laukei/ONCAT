@@ -262,6 +262,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.z_lock.stateChanged.connect(self.on_zlock_change)
 		self.button_goto.clicked.connect(self.on_goto_clicked)
 		self.button_scan.clicked.connect(self.on_scan_clicked)
+		self.button_scan_reset.clicked.connect(self.on_scan_reset_clicked)
 		self.button_hold.clicked.connect(self.on_hold_clicked)
 		self.scanFinished.connect(self.on_scan_finished)
 		self.gotoFinished.connect(self._goto_reset)
@@ -460,6 +461,11 @@ class MainWindow(QtWidgets.QMainWindow):
 				self.button_scan.setText('Stop')
 			except (AssertionError,ValueError) as e:
 				logger.error('Failed to run manager: {}'.format(e))
+
+
+	@QtCore.pyqtSlot()
+	def on_scan_reset_clicked(self):
+		self._managers['rastermanager'].reset_data()
 
 
 	def enable_other_tabs(self,enable):
