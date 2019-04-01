@@ -465,7 +465,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
 	@QtCore.pyqtSlot()
 	def on_scan_reset_clicked(self):
-		self._managers['rastermanager'].reset_data()
+		response = QtWidgets.QMessageBox.question(self,
+			'Reset scan?','Are you sure you want to discard current scan data?',
+			QtWidgets.QMessageBox.Yes|QtWidgets.QMessageBox.No,
+			QtWidgets.QMessageBox.No)
+		if response == QtWidgets.QMessageBox.Yes:
+			self._managers['rastermanager'].reset_data()
+			self._update_graphs()
 
 
 	def enable_other_tabs(self,enable):
